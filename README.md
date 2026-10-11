@@ -10,7 +10,7 @@
 
 > **Author**: [Ramu Mangalarapu](https://www.linkedin.com/in/ramu-mangalarapu) &bull; Senior Backend &amp; Distributed Systems Engineer (UBS, RGUKT IIIT Basar, KCNA Certified)  
 > **Repository**: [https://github.com/developer1622/llm-inference-infra](https://github.com/developer1622/llm-inference-infra)  
-> **Accompanying Publication**: [LLM_Inference_Field_Guide.pdf (111 Pages, 2.8 MB)](./LLM_Inference_Field_Guide.pdf)
+> **Accompanying Publication**: [LLM_Inference_Field_Guide.pdf (111 Pages, 3.58 MB)](./LLM_Inference_Field_Guide.pdf)
 
 ---
 
@@ -350,7 +350,21 @@ Certified Kubernetes &amp; Cloud Native Associate (KCNA) &bull; CNCF, 2024
 
 ---
 
-## 8. License
+## 8. Legal Disclaimer & Non-Affiliation Statement
+
+> **IMPORTANT LEGAL & INDEPENDENT RESEARCH NOTICE**:  
+> This project, source code, architectural patterns, and benchmarks are developed and published by Ramu Mangalarapu strictly in an individual personal capacity for independent educational, research, and technical exploration purposes.  
+> 
+> **Strict Non-Affiliation**: The views, architectural designs, code implementations, and opinions expressed herein belong solely to the author and do **NOT** represent, reflect, or bind the views, positions, strategies, or policies of the author's current employer (UBS), former employers (OpsRamp, Hewlett Packard Enterprise, NCR Voyix, TCS, or any prior organizations), future employers, affiliated academic institutions (RGUKT IIIT Basar, past, present, or future universities), clients, contractors, or partners.  
+> 
+> **No Warranty & Limitation of Liability**: All materials, configuration files, and code snippets are provided strictly on an **"AS-IS"** basis without warranties of any kind, express or implied. Under no circumstances shall the author, current/past/future employers, academic institutions, or associated entities be held liable for any damages, production downtime, security incidents, or financial losses arising from the use or implementation of these materials.  
+> 
+> **Testing Mandate**: This is an educational research artifact. Do **NOT** deploy these configurations into production, banking, or mission-critical environments without independent verification, comprehensive security audits, and exhaustive validation in isolated lower/sandbox environments.
+
+---
+
+## 9. License
 
 This project is licensed under the Apache 2.0 License.  
 The accompanying field guide publication is released under Creative Commons [CC BY-SA 4.0](https://creativecommons.org/licenses/by-sa/4.0/).
+
