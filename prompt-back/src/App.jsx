@@ -87,6 +87,10 @@ import {
   Stage1FailureModes,
 } from './pages/Part6Stage1DeepDive.jsx'
 
+// Hands-On Stage 1 Lab (2 pages)
+import LabStage1Architecture from './pages/LabStage1Architecture.jsx'
+import LabStage1Profiling from './pages/LabStage1Profiling.jsx'
+
 // Part 7 (Stage 2 Deep Dive - 10 pages)
 import {
   Stage2Architecture,
@@ -100,6 +104,14 @@ import {
   WireCaptureProtocolNormalization,
   Stage2HardeningPlaybook,
 } from './pages/Part7Stage2DeepDive.jsx'
+
+// Hands-On Stage 2 Lab (4 pages)
+import {
+  LabStage2Page1,
+  LabStage2Page2,
+  LabStage2Page3,
+  LabStage2Page4,
+} from './pages/LabStage2Walkthrough.jsx'
 
 // Part 8 (Stage 3 Deep Dive - 12 pages)
 import {
@@ -116,6 +128,14 @@ import {
   FaultInjectionAndResilience,
   BenchmarkComparisonAllStages,
 } from './pages/Part8Stage3DeepDive.jsx'
+
+// Hands-On Stage 3 Lab (4 pages)
+import {
+  LabStage3Page1,
+  LabStage3Page2,
+  LabStage3Page3,
+  LabStage3Page4,
+} from './pages/LabStage3Walkthrough.jsx'
 
 // Part 9 (Observability & SRE - 8 pages)
 import {
@@ -169,7 +189,7 @@ export default function App() {
             <i className="d-green" />
           </span>
           LLM Inference Field Guide
-          <small>A4 · print-ready · 100+ pages</small>
+          <small>A4 · print-ready · 111 pages</small>
         </div>
         <div className="toolbar-actions">
           <button className="btn ghost" onClick={() => setOpen((o) => !o)}>
@@ -278,6 +298,10 @@ export default function App() {
         <MemoryBreakdown />
         <Stage1FailureModes />
 
+        {/* Hands-On Stage 1 Lab Walkthrough (2 pages) */}
+        <LabStage1Architecture />
+        <LabStage1Profiling />
+
         {/* Part 7: Stage 2 Deep Dive - LiteLLM Gateway & Resilience (10 pages) */}
         <Stage2Architecture />
         <LiteLLMInternals />
@@ -289,6 +313,12 @@ export default function App() {
         <CircuitBreaking />
         <WireCaptureProtocolNormalization />
         <Stage2HardeningPlaybook />
+
+        {/* Hands-On Stage 2 Lab Walkthrough (4 pages) */}
+        <LabStage2Page1 />
+        <LabStage2Page2 />
+        <LabStage2Page3 />
+        <LabStage2Page4 />
 
         {/* Part 8: Stage 3 Deep Dive - KServe on Kubernetes (12 pages) */}
         <Stage3Introduction />
@@ -303,6 +333,12 @@ export default function App() {
         <EndToEndTrafficPath />
         <FaultInjectionAndResilience />
         <BenchmarkComparisonAllStages />
+
+        {/* Hands-On Stage 3 Lab Walkthrough (4 pages) */}
+        <LabStage3Page1 />
+        <LabStage3Page2 />
+        <LabStage3Page3 />
+        <LabStage3Page4 />
 
         {/* Part 9: Observability, Distributed Tracing & SRE (8 pages) */}
         <GoldenSignalsAI />
