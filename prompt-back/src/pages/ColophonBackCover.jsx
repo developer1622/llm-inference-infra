@@ -61,9 +61,32 @@ export default function ColophonBackCover() {
 
       <div className="border-t border-slate-800 pt-4 flex justify-between items-center text-[10px] text-slate-500 font-mono">
         <div>
-          <span>github.com/developer1622/llm-inference-infra</span>
+          <a
+            href="https://github.com/developer1622/llm-inference-infra"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-cyan-400 hover:underline"
+          >
+            github.com/developer1622/llm-inference-infra
+          </a>
           <span className="mx-2">&bull;</span>
-          <span>vishvakosha.com</span>
+          <a
+            href="https://www.linkedin.com/in/ramu-mangalarapu"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-cyan-400 hover:underline"
+          >
+            linkedin.com/in/ramu-mangalarapu
+          </a>
+          <span className="mx-2">&bull;</span>
+          <a
+            href="https://vishvakosha.com"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-cyan-400 hover:underline"
+          >
+            vishvakosha.com
+          </a>
         </div>
         <div>
           <span>Published in Hyderabad, India &bull; CC BY-SA 4.0</span>

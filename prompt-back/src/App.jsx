@@ -159,7 +159,9 @@ const STORAGE_KEY = 'llm-guide-author-v2'
 
 function loadAuthor() {
   try {
-    return { ...defaultAuthor, ...JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}') }
+    const saved = JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}')
+    delete saved.email
+    return { ...defaultAuthor, ...saved }
   } catch {
     return defaultAuthor
   }

@@ -53,15 +53,25 @@ export default function Author({ author }) {
             {author.certification && <div style={{ fontSize: '7.8pt', color: '#137333', fontWeight: 600 }}>{author.certification}</div>}
           </div>
           <ul className="author-links">
-            {links.map(([k, v], i) => (
-              <li key={k}>
-                <i className={`d-${tones[i % 4]}`} />
-                <span>
-                  <small>{k}</small>
-                  {v}
-                </span>
-              </li>
-            ))}
+            {links.map(([k, v], i) => {
+              const href = k === 'Email' ? `mailto:${v}` : v.startsWith('http') ? v : `https://${v}`
+              return (
+                <li key={k}>
+                  <i className={`d-${tones[i % 4]}`} />
+                  <span>
+                    <small>{k}</small>
+                    <a
+                      href={href}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      style={{ color: '#1a73e8', textDecoration: 'none', wordBreak: 'break-all' }}
+                    >
+                      {v}
+                    </a>
+                  </span>
+                </li>
+              )
+            })}
           </ul>
         </aside>
 

@@ -62,6 +62,9 @@ export default function Cover({ author }) {
           <div className="cv-by">Written by</div>
           <div className="cv-author">{author.name}</div>
           <div className="cv-role">{author.role}</div>
+          <div style={{ fontSize: '7.5pt', color: '#5f6368', marginTop: '1.5mm', fontFamily: 'var(--mono-font)' }}>
+            github.com/developer1622/llm-inference-infra
+          </div>
         </div>
         <div className="cv-stripe">
           <i className="d-blue" />
