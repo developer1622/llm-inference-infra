@@ -1,0 +1,81 @@
+# Stage 2 routing table.
+# model_name is what the client sends. litellm_params.model is the backend.
+# The gateway is the only component that knows Ollama is behind these names.
+
+model_list:
+  # Primary alias used by the field-guide request example.
+  - model_name: demo-model
+    litellm_params:
+      model: ollama_chat/qwen2.5:0.5b
+      api_base: http://127.0.0.1:11434
+      rpm: 120
+    model_info:
+      id: ollama-qwen-0.5b
+      mode: chat
+
+  # Same weights, explicit alias. Clients can ask for either name.
+  - model_name: qwen
+    litellm_params:
+      model: ollama_chat/qwen2.5:0.5b
+      api_base: http://127.0.0.1:11434
+      rpm: 120
+    model_info:
+      id: ollama-qwen-0.5b-alias
+      mode: chat
+
+  # Second model endpoint. Smaller instruct model on the same Ollama server.
+  - model_name: smollm
+    litellm_params:
+      model: ollama_chat/smollm2:135m
+      api_base: http://127.0.0.1:11434
+      rpm: 120
+    model_info:
+      id: ollama-smollm-135m
+      mode: chat
+
+  # Stage 3 KServe deployed model in Kubernetes
+  - model_name: kserve-qwen
+    litellm_params:
+      model: openai/kserve-qwen
+      api_base: http://127.0.0.1:80/v1
+      headers:
+        Host: kserve-qwen-kserve-test.127.0.0.1.nip.io
+      api_key: not-needed
+    model_info:
+      id: kserve-kubernetes-qwen
+      mode: chat
+
+  # Deliberately unreachable backend. Used by the failure demo.
+  # Short timeout so a refused connection returns quickly, including one retry.
+  - model_name: backend-down
+    litellm_params:
+      model: ollama_chat/qwen2.5:0.5b
+      api_base: http://127.0.0.1:9
+      timeout: 2
+      rpm: 60
+    model_info:
+      id: unreachable-backend
+      mode: chat
+
+litellm_settings:
+  # Ollama does not accept every OpenAI field. Drop those instead of failing the call.
+  drop_params: true
+  request_timeout: 180
+  num_retries: 1
+  json_logs: true
+  # One proxy process on a CPU lab. Verbose debug floods the request log.
+  set_verbose: false
+
+router_settings:
+  routing_strategy: simple-shuffle
+  num_retries: 1
+  timeout: 120
+  # A failed failure-demo call must not cool down the real models.
+  disable_cooldowns: true
+
+general_settings:
+  master_key: os.environ/LITELLM_MASTER_KEY
+  # Postgres stores the key table and one row per request.
+  database_url: os.environ/DATABASE_URL
+  # /health/liveliness is the process check. Skip probing every backend in the background.
+  background_health_checks: false

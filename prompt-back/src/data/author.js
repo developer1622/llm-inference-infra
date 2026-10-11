@@ -56,16 +56,26 @@ export const defaultAuthor = {
   ],
 }
 
+export const labSystemSpecs = {
+  host: 'Linux (WSL2 on Windows 11)',
+  kernel: '6.6.87.2-microsoft-standard-WSL2 (#1 SMP PREEMPT_DYNAMIC x86_64)',
+  os: 'Ubuntu 24.04.1 LTS',
+  cpu: 'Intel(R) Core(TM) i5-10210U @ 1.60GHz (4 physical cores, 8 threads, AVX2 SIMD)',
+  memory: '7.8 GiB DDR4 RAM (~4.1 GiB available during runs)',
+  swap: '4.0 GiB swapfile on virtual disk',
+  disk: '1007 GB NVMe SSD (ext4 filesystem mounted on /dev/sdd, >920 GB available)',
+  gpu: 'No Discrete GPU (100% CPU-bound AVX2 vector inference, GGUF Q4_K_M)',
+  containerRuntime: 'Docker Engine 27.x + containerd 2.3.4 (inside KinD)',
+  kubernetesCluster: 'KinD v1.37.0 HA cluster (1 control-plane, 3 worker nodes)',
+}
+
 export const authorFields = [
   { key: 'name', label: 'Name' },
-  { key: 'role', label: 'Role / headline' },
-  { key: 'org', label: 'Company / community' },
+  { key: 'role', label: 'Role' },
+  { key: 'org', label: 'Organization' },
   { key: 'location', label: 'Location' },
-  { key: 'bio', label: 'Short bio', multiline: true },
-  { key: 'why', label: 'Why I wrote this', multiline: true },
-  { key: 'topics', label: 'Topics (comma separated)' },
   { key: 'email', label: 'Email' },
   { key: 'website', label: 'Website' },
-  { key: 'github', label: 'GitHub' },
-  { key: 'linkedin', label: 'LinkedIn' },
+  { key: 'bio', label: 'Bio', multiline: true },
+  { key: 'why', label: 'Why read this guide', multiline: true },
 ]

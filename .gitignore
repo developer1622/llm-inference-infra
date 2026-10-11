@@ -1,8 +1,17 @@
 # Binaries
 stage1/stage1-client
+stage2/stage2-client
+stage3/stage3-client
+stage3/predictor/kserve-predictor
 *.exe
 *.out
 
 # Model weights
 models/*.gguf
 models/
+
+# Web / node artifacts
+node_modules/
+prompt-back/dist/
+*.log
+

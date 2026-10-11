@@ -1,0 +1,58 @@
+# LiteLLM sits between the Go client and the Ollama server from Stage 1.
+# network_mode: host lets the gateway call Ollama at 127.0.0.1:11434 on this machine.
+# Postgres is published on 54329 so that host-networked LiteLLM can reach it.
+# The published Stage 1 container stays untouched.
+
+services:
+  db:
+    image: postgres:16-alpine
+    container_name: stage2-postgres
+    environment:
+      POSTGRES_DB: litellm
+      POSTGRES_USER: litellm
+      POSTGRES_PASSWORD: litellm
+    ports:
+      - "127.0.0.1:54329:5432"
+    volumes:
+      - stage2-pg:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U litellm -d litellm"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+    restart: unless-stopped
+
+  litellm:
+    image: ghcr.io/berriai/litellm:main-stable
+    container_name: stage2-litellm
+    network_mode: host
+    depends_on:
+      db:
+        condition: service_healthy
+    env_file:
+      - .env
+    environment:
+      DATABASE_URL: postgresql://litellm:litellm@127.0.0.1:54329/litellm
+    volumes:
+      - ./config.yaml:/app/config.yaml:ro
+    command:
+      - "--config"
+      - "/app/config.yaml"
+      - "--host"
+      - "0.0.0.0"
+      - "--port"
+      - "4000"
+    restart: unless-stopped
+    healthcheck:
+      test:
+        - "CMD"
+        - "python"
+        - "-c"
+        - "import urllib.request; urllib.request.urlopen('http://127.0.0.1:4000/health/liveliness', timeout=3)"
+      interval: 5s
+      timeout: 5s
+      retries: 30
+      start_period: 40s
+
+volumes:
+  stage2-pg:

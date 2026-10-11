@@ -1,44 +1,28 @@
-# Stage 1: LLM Inference Request Lifecycle Explorer
+# Stage 1: A prompt becomes a response
 
-This repository contains the complete implementation of **Stage 1** from the Model Serving Architecture curriculum:
-> **"A prompt becomes a response"** — demonstrating the complete lifecycle of an LLM request from a client sending an HTTP prompt to a model generating tokens and returning a response, without Kubernetes or an API Gateway.
+Stage 1 is the shortest path in this lab. A Go client, or curl, sends a prompt to Ollama. Ollama tokenizes it, runs `qwen2.5:0.5b` with llama.cpp, and streams tokens back. There is no gateway and no Kubernetes in this path.
+
+```
+curl or stage1-client
+        │  HTTP
+        ▼
+Ollama :11434
+  /api/generate          NDJSON
+  /api/chat              NDJSON
+  /v1/chat/completions   Server-Sent Events
+        │
+        ▼
+qwen2.5:0.5b  (GGUF, CPU)
+```
+
+The client records time to first token, total latency, prompt tokens, generated tokens, and tokens per second.
 
 ---
 
-## 1. Architecture Overview
+## Request lifecycle
 
-```
-┌─────────────────────────────────────────────────────────────┐
-│ 1. Client Layer                                             │
-│    • curl (CLI)                                             │
-│    • Go client (net/http standard library)                  │
-└──────────────────────────────┬──────────────────────────────┘
-                               │ HTTP POST /api/chat
-                               │ JSON Payload + SSE / NDJSON
-                               ▼
-┌─────────────────────────────────────────────────────────────┐
-│ 2. Serving & Inference Engine (Ollama on Docker / Host)     │
-│    • HTTP API Server (Gin routing)                          │
-│    • Tokenizer (Text -> Token IDs)                          │
-│    • Prompt Template Engine (ChatML formatting)             │
-│    • Scheduler & KV Cache Manager                           │
-│    • Autoregressive Model Runtime (llama.cpp engine)        │
-└──────────────────────────────┬──────────────────────────────┘
-                               │
-                               ▼
-┌─────────────────────────────────────────────────────────────┐
-│ 3. Model Weights & Computation Runtime                      │
-│    • Model: Qwen 2.5 0.5B Instruct (GGUF Q4_K_M)           │
-│    • Hardware: CPU (x86_64, AVX2 SIMD vectorization)        │
-│    • Output: Next-token probability distribution            │
-└─────────────────────────────────────────────────────────────┘
-```
+A streaming chat call looks like this:
 
----
-
-## 2. Request Lifecycle: What Actually Happens Behind the Prompt
-
-When your Go application sends:
 ```json
 {
   "model": "qwen2.5:0.5b",
@@ -47,102 +31,102 @@ When your Go application sends:
 }
 ```
 
-1. **Serialization & TCP Handshake**: The Go client serializes the struct into JSON and sends an HTTP POST over TCP to port `11434`.
-2. **Chat Template Formatting**: The serving engine wraps the message in the model's template:
-   `<|im_start|>user\nExplain Kubernetes in one sentence.<|im_end|>\n<|im_start|>assistant\n`
-3. **Tokenization (Prefill Phase)**: The tokenizer maps words/subwords to numerical token IDs (e.g., 36 input tokens).
-4. **Prefill Evaluation**: The model processes all 36 tokens in parallel to compute initial key-value attention tensors (recorded as `prompt_eval_duration`).
-5. **Autoregressive Decoding**:
-   - The model predicts the next token ID from probabilities (sampling).
-   - The token ID is detokenized back to text (e.g. `"Kubernetes"`).
-   - The token is emitted immediately over the open HTTP connection as a chunk.
-   - The KV cache retains the context so previous tokens don't need recomputing.
-6. **Streaming Back to Go Client**: The Go client reads the chunk via `bufio.Scanner`, calculates **Time to First Token (TTFT)**, and streams it to stdout.
-7. **End of Sequence (EOS)**: The model emits `<|im_end|>`, and the server sends a final JSON chunk containing token counts and duration metrics.
+1. The Go client posts that JSON to `http://localhost:11434/api/chat`.
+2. Ollama applies the model chat template and tokenizes the prompt.
+3. Prefill runs the prompt tokens and fills the KV cache. Ollama reports this as `prompt_eval_count` and `prompt_eval_duration`.
+4. Decode emits one token at a time. Each token is a line of NDJSON on the open connection. The client marks time to first token on the first content chunk.
+5. The final chunk has `done: true` plus the token counts and durations. The client turns those into tokens per second.
+
+`/api/generate` is the same runtime with a raw prompt. `/v1/chat/completions` is the OpenAI-shaped SSE form of the same model. Stage 2 speaks that third shape.
 
 ---
 
-## 3. Quick Start & Usage
+## Quick start
 
-### 3.1 Verify the Ollama Inference Server
-The Ollama container is running on port 11434 with model `qwen2.5:0.5b`:
+Ollama is already published on port 11434. Confirm it, then build the client from this directory:
+
 ```bash
-curl http://localhost:11434/
-# Output: Ollama is running
-
+curl -s http://localhost:11434/
 docker exec ollama ollama list
-# Output: qwen2.5:0.5b (491 MB)
+go build -o stage1-client .
 ```
 
+`ollama list` should include `qwen2.5:0.5b`.
+
 ---
 
-### 3.2 Inspecting with `curl`
-Run the provided demo script:
+## Usage
+
+### Streaming chat (default)
+
+```bash
+./stage1-client -endpoint chat -stream=true \
+  -prompt "Explain Kubernetes in one sentence."
+```
+
+### Unary chat
+
+```bash
+./stage1-client -endpoint chat -stream=false \
+  -prompt "Explain neural networks in 10 words."
+```
+
+### Raw generate
+
+```bash
+./stage1-client -endpoint generate -stream=false \
+  -prompt "Explain what an LLM token is in one short sentence."
+```
+
+### OpenAI-compatible SSE
+
+```bash
+./stage1-client -endpoint openai -stream=true \
+  -prompt "List 3 primary colors."
+```
+
+### Interactive multi-turn
+
+```bash
+./stage1-client -interactive
+```
+
+Type `exit` to leave the session.
+
+### curl
+
 ```bash
 ./curl_demo.sh
 ```
 
-Or run individual commands:
-
-**Unary Request (/api/generate)**:
-```bash
-curl -s -X POST http://localhost:11434/api/generate \
-  -H "Content-Type: application/json" \
-  -d '{
-    "model": "qwen2.5:0.5b",
-    "prompt": "Explain what an LLM token is in one short sentence.",
-    "stream": false
-  }' | jq .
-```
-
-**Streaming Request (/api/chat)**:
-```bash
-curl -N -s -X POST http://localhost:11434/api/chat \
-  -H "Content-Type: application/json" \
-  -d '{
-    "model": "qwen2.5:0.5b",
-    "messages": [{"role": "user", "content": "Hello!"}],
-    "stream": true
-  }'
-```
-
-**OpenAI-Compatible SSE Stream (/v1/chat/completions)**:
-```bash
-curl -N -s -X POST http://localhost:11434/v1/chat/completions \
-  -H "Content-Type: application/json" \
-  -d '{
-    "model": "qwen2.5:0.5b",
-    "messages": [{"role": "user", "content": "Hello!"}],
-    "stream": true
-  }'
-```
+The script runs three calls against `qwen2.5:0.5b`: a unary `/api/generate`, a streaming `/api/chat`, and the first SSE chunks of `/v1/chat/completions`. Pass another pulled model name as the first argument if you want to point it elsewhere.
 
 ---
 
-### 3.3 Running the Go Client (`stage1-client`)
+## Flags
 
-The Go client is built with the Go standard library (`net/http`) and supports deep wire-level inspection.
+| Flag | Default | Meaning |
+| --- | --- | --- |
+| `-url` | `http://localhost:11434` | Ollama base URL |
+| `-model` | `qwen2.5:0.5b` | Model name Ollama already has |
+| `-prompt` | a short lifecycle prompt | Single-shot prompt |
+| `-stream` | `true` | Stream tokens as they arrive |
+| `-endpoint` | `chat` | `chat`, `generate`, or `openai` |
+| `-inspect` | `true` | Print the HTTP request and response headers |
+| `-interactive` | `false` | Multi-turn session |
 
-#### 1. Streaming Chat (Default)
-```bash
-./stage1-client -endpoint chat -stream=true -prompt "Explain Kubernetes in one sentence."
-```
-*Outputs HTTP request, response headers, real-time token stream, TTFT (~600ms), and token generation speed.*
+Wire inspection is on by default. Pass `-inspect=false` for the answer and the metrics only.
 
-#### 2. Non-Streaming (Unary)
-```bash
-./stage1-client -endpoint chat -stream=false -prompt "Explain neural networks in 10 words."
-```
-*Shows how the client must wait until the full response is generated before reading.*
+---
 
-#### 3. OpenAI-Compatible Mode
-```bash
-./stage1-client -endpoint openai -stream=true -prompt "List 3 primary colors."
-```
-*Streams Server-Sent Events (SSE `data: {...}`) formatted for OpenAI clients. This directly prepares for Stage 2 (LiteLLM)!*
+## What the metrics mean
 
-#### 4. Interactive Chat REPL (Multi-Turn)
-```bash
-./stage1-client -interactive
-```
-*Allows you to chat interactively with the model while tracking token metrics on each turn.*
+| Field | Meaning |
+| --- | --- |
+| Time to first token | Wait from send until the first content token |
+| Total latency | Wait until the response is finished |
+| Prompt tokens | Tokens in the formatted prompt |
+| Completion tokens | Tokens the model generated |
+| Tokens/sec | Completion tokens divided by decode time |
+
+A cold model is slower on the first call. Later calls reuse the loaded weights.
