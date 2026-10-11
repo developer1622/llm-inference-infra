@@ -1,649 +1,571 @@
 import React from 'react';
+import { Page, Section, Callout, Term } from '../components/ui.jsx';
 
 // PART 4: 8 High-Density Technical Pages on LLM Quantization Mechanics
+// Styled with Google Design System, A4 Print-Safe Layout & Side Background Formatting
 
 export const QuantizationIntro = () => (
-  <div className="page flex flex-col justify-between p-10 bg-slate-900 text-slate-100 font-sans">
-    <div>
-      <div className="flex justify-between items-center border-b border-slate-700 pb-2 mb-4">
-        <span className="text-xs uppercase tracking-widest text-emerald-400 font-mono">Part IV · Quantization Mechanics · Page 1</span>
-        <span className="text-xs text-slate-400 font-mono">Memory Bandwidth & Bit Economics</span>
-      </div>
-      <h2 className="text-2xl font-bold text-white mb-2">4.1 Why Quantization Is Mandatory in Modern Serving</h2>
-      <p className="text-xs text-slate-300 leading-relaxed mb-4">
-        In traditional high-performance computing, mathematical precision is rarely sacrificed. In deep learning inference,
-        however, <strong>quantization is not an optimization; it is an existential operational requirement</strong>. The fundamental
-        reality of autoregressive decoding is that generative LLMs are strictly bounded by memory bandwidth, not compute capacity.
-      </p>
+  <Page tone="green" running="Part 4 · Quantization Mechanics & Economics" part="Part 4">
+    <div className="kicker">Memory Bandwidth &amp; Bit Economics</div>
+    <h1 className="big">Why Quantization Is Mandatory in Modern Serving</h1>
+    <p className="lead">
+      In deep learning inference, quantization is an existential operational requirement: autoregressive decoding is
+      strictly bounded by memory bandwidth, not compute capacity.
+    </p>
 
-      <div className="grid grid-cols-2 gap-4 mb-4">
-        <div className="bg-slate-800/80 p-4 rounded border border-slate-700">
-          <h4 className="text-xs font-bold text-emerald-300 uppercase tracking-wider mb-2 font-mono">The Arithmetic Intensity Reality</h4>
-          <p className="text-[11px] text-slate-300 mb-2 leading-relaxed">
-            During token generation (batch size = 1), computing the next token requires loading every single parameter of the model
-            from memory (RAM or VRAM) through the bus into the processor cache/registers to perform exactly 2 operations (multiply-accumulate) per weight.
+    <div className="grid2 mt-s">
+      <Section title="The Arithmetic Intensity Reality" color="green">
+        <div className="card tone-green">
+          <b>Token Generation Math (Batch Size = 1)</b>
+          <p style={{ fontSize: '7.6pt', margin: '1mm 0' }}>
+            Computing the next token requires loading every single parameter of the model from memory through the bus into processor registers for 2 FLOPs per weight.
           </p>
-          <div className="bg-slate-950 p-2 rounded font-mono text-[10px] text-emerald-400 mb-2">
-            Arithmetic Intensity = 2 FLOPs / B bytes loaded<br/>
-            FP16: 2 FLOPs / 2 bytes = 1.0 FLOP/byte<br/>
-            INT4: 2 FLOPs / 0.5 bytes = 4.0 FLOP/byte
+          <div className="code-box" style={{ margin: '1.5mm 0', padding: '1.5mm 2mm', fontSize: '7.4pt' }}>
+            <code>Arithmetic Intensity = 2 FLOPs / B bytes loaded<br/>FP16: 2 FLOPs / 2 bytes = 1.0 FLOP/byte<br/>INT4: 2 FLOPs / 0.5 bytes = 4.0 FLOP/byte</code>
           </div>
-          <p className="text-[10px] text-slate-400 leading-relaxed">
-            A system with 38.4 GB/s memory bandwidth (such as our dual-channel DDR4-2667 laptop) can at best stream 38.4 GB of weights per second.
-            A 7B parameter model in FP16 weighs 14 GB. The maximum theoretical decode speed is 38.4 / 14 = 2.74 tokens/second, regardless of CPU GHz!
+          <p className="fine" style={{ margin: 0, fontSize: '7.2pt' }}>
+            On our 38.4 GB/s dual-channel DDR4 laptop, a 7B model in FP16 (14 GB) yields at best <b>2.74 tok/s</b>. In INT4 (3.9 GB), theoretical speed jumps to <b>9.85 tok/s</b>!
           </p>
         </div>
+      </Section>
 
-        <div className="bg-slate-800/80 p-4 rounded border border-slate-700">
-          <h4 className="text-xs font-bold text-sky-300 uppercase tracking-wider mb-2 font-mono">Memory Footprint Across Precisions</h4>
-          <div className="space-y-2 text-[11px]">
-            <div className="flex justify-between border-b border-slate-700/60 pb-1">
-              <span className="text-slate-400">FP32 (Single Precision)</span>
-              <span className="font-mono text-rose-400 font-bold">4.0 bytes / param (28 GB for 7B)</span>
-            </div>
-            <div className="flex justify-between border-b border-slate-700/60 pb-1">
-              <span className="text-slate-400">FP16 / BF16 (Half Precision)</span>
-              <span className="font-mono text-amber-400 font-bold">2.0 bytes / param (14 GB for 7B)</span>
-            </div>
-            <div className="flex justify-between border-b border-slate-700/60 pb-1">
-              <span className="text-slate-400">INT8 (Quarter Precision)</span>
-              <span className="font-mono text-blue-400 font-bold">1.0 bytes / param (7 GB for 7B)</span>
-            </div>
-            <div className="flex justify-between border-b border-slate-700/60 pb-1">
-              <span className="text-slate-400">INT4 / Q4_K_M (Target Format)</span>
-              <span className="font-mono text-emerald-400 font-bold">~0.55 bytes / param (3.9 GB for 7B)</span>
-            </div>
-            <div className="flex justify-between pb-1">
-              <span className="text-slate-400">INT2 / Q2_K (Extreme Compression)</span>
-              <span className="font-mono text-purple-400 font-bold">~0.32 bytes / param (2.3 GB for 7B)</span>
-            </div>
-          </div>
-          <div className="mt-3 p-2 bg-emerald-950/40 border border-emerald-500/30 rounded text-[10px] text-emerald-200">
-            <strong>Key Engineering Takeaway:</strong> Compressing weights by 4x drops the memory bus pressure by 4x, directly translating to a ~3.5x - 4x throughput increase during single-stream token generation.
-          </div>
+      <Section title="Memory Footprint Across Precisions" color="blue">
+        <div className="card tone-blue">
+          <b>VRAM &amp; Storage Scaling (7B Parameter Model)</b>
+          <ul className="meta-list" style={{ marginTop: '1.5mm', fontSize: '7.4pt' }}>
+            <li><b>FP32 (Single):</b> 4.0 bytes/param &bull; 28.0 GB VRAM (Impractical for serving)</li>
+            <li><b>FP16 / BF16 (Half):</b> 2.0 bytes/param &bull; 14.0 GB VRAM (Standard master weights)</li>
+            <li><b>INT8 (Quarter):</b> 1.0 bytes/param &bull; 7.0 GB VRAM (W8A8 Tensor Core target)</li>
+            <li><b>INT4 / Q4_K_M:</b> ~0.55 bytes/param &bull; 3.9 GB VRAM (Standard edge &amp; CPU target)</li>
+            <li><b>INT2 / Q2_K:</b> ~0.32 bytes/param &bull; 2.3 GB VRAM (Severe perplexity cliff)</li>
+          </ul>
+        </div>
+      </Section>
+    </div>
+
+    <Section title="The Three Core Axes of LLM Quantization" color="yellow" className="mt-s">
+      <div className="grid3">
+        <div className="card tone-green">
+          <b style={{ color: '#188038' }}>1. Weight-Only (W4A16, W8A16)</b>
+          <p style={{ margin: 0, fontSize: '7.4pt' }}>Weights stored compressed in 4-bit or 8-bit; dequantized on-the-fly into registers for FP16 math. Best for memory-bounded single-user decode.</p>
+        </div>
+        <div className="card tone-blue">
+          <b style={{ color: '#1a73e8' }}>2. Weight &amp; Activation (W8A8)</b>
+          <p style={{ margin: 0, fontSize: '7.4pt' }}>Both weights and activations quantized. Matrix multiplications execute via integer INT8 Tensor Cores. Massive compute throughput boost for prefill.</p>
+        </div>
+        <div className="card tone-yellow">
+          <b style={{ color: '#b06000' }}>3. KV Cache Quantization</b>
+          <p style={{ margin: 0, fontSize: '7.4pt' }}>Keys and values in attention cache compressed to FP8 or INT4. Reduces context memory footprint by 50–75%, doubling maximum concurrent sequences.</p>
         </div>
       </div>
+    </Section>
 
-      <div className="bg-slate-950 p-3 rounded border border-slate-800">
-        <h4 className="text-xs font-bold text-slate-300 mb-1 font-mono uppercase tracking-wider">The Three Core Axes of LLM Quantization</h4>
-        <div className="grid grid-cols-3 gap-3 text-[10px] text-slate-300">
-          <div className="border-l-2 border-emerald-500 pl-2">
-            <strong className="text-emerald-300">1. Weight-Only (W4A16, W8A16)</strong>
-            <p className="text-slate-400 mt-1">Weights are stored compressed in 4-bit or 8-bit. During inference, weights are dequantized on-the-fly into registers for FP16 math. Best for memory-bounded decode.</p>
-          </div>
-          <div className="border-l-2 border-sky-500 pl-2">
-            <strong className="text-sky-300">2. Weight & Activation (W8A8)</strong>
-            <p className="text-slate-400 mt-1">Both weights and hidden states are quantized. Matrix multiplication is executed via integer INT8 tensor cores. Massive compute throughput boost for prefill.</p>
-          </div>
-          <div className="border-l-2 border-purple-500 pl-2">
-            <strong className="text-purple-300">3. KV Cache Quantization</strong>
-            <p className="text-slate-400 mt-1">Keys and values in attention cache are compressed to FP8 or INT4. Reduces context memory footprint by 50-75%, doubling maximum concurrent sequences.</p>
-          </div>
-        </div>
-      </div>
-    </div>
-    <div className="text-[10px] text-slate-500 border-t border-slate-800 pt-2 flex justify-between font-mono">
-      <span>LLM INFERENCE FIELD GUIDE · RAMU MANGALARAPU</span>
-      <span>SECTION 4.1</span>
-    </div>
-  </div>
+    <Callout title="Key Systems Takeaway" tone="green" className="mt-s">
+      Compressing weights by 4&times; drops memory bus saturation by 4&times;, directly translating to a ~3.5&times; to 4&times;
+      throughput increase during memory-bound autoregressive decoding.
+    </Callout>
+  </Page>
 );
 
 export const NumericalFormats = () => (
-  <div className="page flex flex-col justify-between p-10 bg-slate-900 text-slate-100 font-sans">
-    <div>
-      <div className="flex justify-between items-center border-b border-slate-700 pb-2 mb-4">
-        <span className="text-xs uppercase tracking-widest text-emerald-400 font-mono">Part IV · Quantization Mechanics · Page 2</span>
-        <span className="text-xs text-slate-400 font-mono">Numerical Representations & Bit Layouts</span>
-      </div>
-      <h2 className="text-2xl font-bold text-white mb-2">4.2 Floating Point vs Fixed Point Formats</h2>
-      <p className="text-xs text-slate-300 leading-relaxed mb-4">
-        To understand quantization error, we must examine the underlying silicon bit layouts. Every numeric format is a compromise
-        between <strong>dynamic range</strong> (span between smallest and largest representable numbers) and <strong>precision</strong> (resolution between adjacent values).
-      </p>
+  <Page tone="green" running="Part 4 · Floating Point vs Fixed Point" part="Part 4">
+    <div className="kicker">Numerical Representations &amp; Bit Layouts</div>
+    <h1 className="big">Floating Point vs Fixed Point Formats</h1>
+    <p className="lead">
+      To understand quantization error, we examine silicon bit layouts. Every numeric format balances
+      dynamic range against precision resolution.
+    </p>
 
-      {/* Bit Layout Visualizer */}
-      <div className="space-y-3 mb-4 font-mono text-[10px]">
-        {/* FP32 */}
-        <div className="bg-slate-950 p-2.5 rounded border border-slate-800">
-          <div className="flex justify-between text-slate-400 mb-1">
-            <span className="font-bold text-white">IEEE 754 FP32 (Standard Float)</span>
-            <span>Range: 1.4e-45 to 3.4e38 | Precision: ~7.2 decimal digits</span>
+    <Section title="Bit Layout Architecture Across Formats" color="green" className="mt-s">
+      <div className="space-y-2 text-[8pt]">
+        <div className="card tone-blue" style={{ padding: '2mm 3mm' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '1mm' }}>
+            <b>IEEE 754 FP32 (Single Precision)</b>
+            <span className="fine">Range: 1.4e-45 to 3.4e38 &bull; Precision: ~7.2 decimal digits</span>
           </div>
-          <div className="flex h-6 rounded overflow-hidden text-center text-[9px] font-bold">
-            <div className="w-[3.125%] bg-rose-600 flex items-center justify-center text-white" title="Sign (1 bit)">S</div>
-            <div className="w-[25%] bg-amber-600 flex items-center justify-center text-white" title="Exponent (8 bits)">Exponent (8 bits, bias 127)</div>
-            <div className="w-[71.875%] bg-blue-600 flex items-center justify-center text-white" title="Mantissa (23 bits)">Mantissa / Fraction (23 bits)</div>
+          <div style={{ display: 'flex', height: '5mm', borderRadius: '1mm', overflow: 'hidden', textAlign: 'center', fontSize: '6.5pt', fontWeight: 700, color: '#fff' }}>
+            <div style={{ width: '3.125%', background: '#d93025' }}>S</div>
+            <div style={{ width: '25%', background: '#b06000' }}>Exponent (8 bits, bias 127)</div>
+            <div style={{ width: '71.875%', background: '#1a73e8' }}>Mantissa / Fraction (23 bits)</div>
           </div>
         </div>
 
-        {/* FP16 */}
-        <div className="bg-slate-950 p-2.5 rounded border border-slate-800">
-          <div className="flex justify-between text-slate-400 mb-1">
-            <span className="font-bold text-white">IEEE 754 FP16 (Half Precision)</span>
-            <span>Range: 6.0e-8 to 65,504 | Precision: ~3.3 decimal digits</span>
+        <div className="card tone-yellow" style={{ padding: '2mm 3mm' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '1mm' }}>
+            <b>IEEE 754 FP16 (Half Precision)</b>
+            <span className="fine">Range: 6.0e-8 to 65,504 &bull; Precision: ~3.3 decimal digits</span>
           </div>
-          <div className="flex h-6 rounded overflow-hidden text-center text-[9px] font-bold">
-            <div className="w-[6.25%] bg-rose-600 flex items-center justify-center text-white">S</div>
-            <div className="w-[31.25%] bg-amber-600 flex items-center justify-center text-white">Exp (5b, bias 15)</div>
-            <div className="w-[62.5%] bg-blue-600 flex items-center justify-center text-white">Mantissa (10 bits)</div>
+          <div style={{ display: 'flex', height: '5mm', borderRadius: '1mm', overflow: 'hidden', textAlign: 'center', fontSize: '6.5pt', fontWeight: 700, color: '#fff' }}>
+            <div style={{ width: '6.25%', background: '#d93025' }}>S</div>
+            <div style={{ width: '31.25%', background: '#b06000' }}>Exp (5b, bias 15)</div>
+            <div style={{ width: '62.5%', background: '#1a73e8' }}>Mantissa (10 bits)</div>
           </div>
-          <p className="text-[9px] text-amber-300/80 mt-1">Warning: Narrow exponent causes frequent overflow (NaN/Inf) during LLM training and heavy activations.</p>
+          <p className="fine" style={{ margin: '1mm 0 0', color: '#b06000' }}>Warning: Narrow 5-bit exponent triggers frequent overflow (NaN/Inf) during LLM training.</p>
         </div>
 
-        {/* BF16 */}
-        <div className="bg-slate-950 p-2.5 rounded border border-slate-800">
-          <div className="flex justify-between text-slate-400 mb-1">
-            <span className="font-bold text-white">Brain Floating Point (BF16 - Google Brain)</span>
-            <span>Range: Identical to FP32 (~3.4e38) | Precision: ~2.4 decimal digits</span>
+        <div className="card tone-green" style={{ padding: '2mm 3mm' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '1mm' }}>
+            <b>Brain Floating Point (BF16 &bull; Google Brain)</b>
+            <span className="fine">Range: Identical to FP32 (~3.4e38) &bull; Precision: ~2.4 decimal digits</span>
           </div>
-          <div className="flex h-6 rounded overflow-hidden text-center text-[9px] font-bold">
-            <div className="w-[6.25%] bg-rose-600 flex items-center justify-center text-white">S</div>
-            <div className="w-[50%] bg-amber-600 flex items-center justify-center text-white">Exponent (8 bits, bias 127)</div>
-            <div className="w-[43.75%] bg-blue-600 flex items-center justify-center text-white">Mantissa (7 bits)</div>
+          <div style={{ display: 'flex', height: '5mm', borderRadius: '1mm', overflow: 'hidden', textAlign: 'center', fontSize: '6.5pt', fontWeight: 700, color: '#fff' }}>
+            <div style={{ width: '6.25%', background: '#d93025' }}>S</div>
+            <div style={{ width: '50%', background: '#b06000' }}>Exponent (8 bits, bias 127)</div>
+            <div style={{ width: '43.75%', background: '#1a73e8' }}>Mantissa (7 bits)</div>
           </div>
-          <p className="text-[9px] text-emerald-300/80 mt-1">Preserves FP32 dynamic range perfectly. Standard master weight format for Llama, Mistral, and Qwen.</p>
-        </div>
-
-        {/* FP8 & INT8 */}
-        <div className="grid grid-cols-2 gap-2">
-          <div className="bg-slate-950 p-2 rounded border border-slate-800">
-            <div className="font-bold text-white mb-0.5">FP8 (E4M3 / E5M2)</div>
-            <div className="flex h-5 rounded overflow-hidden text-center text-[8px] font-bold">
-              <div className="w-[12.5%] bg-rose-600 flex items-center justify-center text-white">S</div>
-              <div className="w-[50%] bg-amber-600 flex items-center justify-center text-white">Exp (4b)</div>
-              <div className="w-[37.5%] bg-blue-600 flex items-center justify-center text-white">Mant (3b)</div>
-            </div>
-            <p className="text-[8px] text-slate-400 mt-1">Native to NVIDIA Hopper (H100) & Ada Lovelace. 2x faster than FP16.</p>
-          </div>
-          <div className="bg-slate-950 p-2 rounded border border-slate-800">
-            <div className="font-bold text-white mb-0.5">INT8 (Signed Two's Complement)</div>
-            <div className="flex h-5 rounded overflow-hidden text-center text-[8px] font-bold">
-              <div className="w-[100%] bg-emerald-600 flex items-center justify-center text-white">8-bit Signed Integer [-128, 127]</div>
-            </div>
-            <p className="text-[8px] text-slate-400 mt-1">Linear spacing. Requires scale factor: X_real = Scale * X_int.</p>
-          </div>
+          <p className="fine" style={{ margin: '1mm 0 0', color: '#188038' }}>Preserves FP32 dynamic range. The standard master weights format for LLaMA 3, Mistral, and Qwen.</p>
         </div>
       </div>
+    </Section>
 
-      <div className="bg-slate-800/80 p-3 rounded border border-slate-700 text-[11px] text-slate-300">
-        <h4 className="text-xs font-bold text-white mb-1">The Dynamic Range Problem in Transformer Weights</h4>
-        <p className="leading-relaxed">
-          While most neural network weights are normally distributed around zero with variance &sigma; &asymp; 0.02,
-          certain critical attention projection dimensions contain massive outlier values (exceeding &plusmn;15.0).
-          If an integer format maps its entire range to accommodate the outlier, standard weights collapse into zero bins, destroying perplexity.
-        </p>
-      </div>
+    <div className="grid2 mt-s">
+      <Section title="FP8 (E4M3 / E5M2)" color="blue">
+        <div className="card tone-blue">
+          <b>Hopper FP8 Format</b>
+          <p style={{ margin: 0, fontSize: '7.4pt' }}>Native to NVIDIA H100 and Ada Lovelace. Provides 2&times; compute throughput over FP16 with hardware-accelerated transformer engine scaling.</p>
+        </div>
+      </Section>
+      <Section title="INT8 Signed Two's Complement" color="green">
+        <div className="card tone-green">
+          <b>Integer Quantization Target</b>
+          <p style={{ margin: 0, fontSize: '7.4pt' }}>Uniform linear grid spanning [-128, 127]. Replaces floating point multiply with fast integer SIMD arithmetic via scale factor $X = S \times q$.</p>
+        </div>
+      </Section>
     </div>
-    <div className="text-[10px] text-slate-500 border-t border-slate-800 pt-2 flex justify-between font-mono">
-      <span>LLM INFERENCE FIELD GUIDE · RAMU MANGALARAPU</span>
-      <span>SECTION 4.2</span>
-    </div>
-  </div>
+
+    <Callout title="The Dynamic Range Challenge" tone="red" className="mt-s">
+      While 99% of weights cluster normally around zero, critical attention dimensions contain massive outlier activations (&gt;15.0).
+      Mapping integer ranges naively destroys precision on standard weights, causing severe perplexity degradation.
+    </Callout>
+  </Page>
 );
 
 export const UniformQuantization = () => (
-  <div className="page flex flex-col justify-between p-10 bg-slate-900 text-slate-100 font-sans">
-    <div>
-      <div className="flex justify-between items-center border-b border-slate-700 pb-2 mb-4">
-        <span className="text-xs uppercase tracking-widest text-emerald-400 font-mono">Part IV · Quantization Mechanics · Page 3</span>
-        <span className="text-xs text-slate-400 font-mono">Symmetric vs Asymmetric Uniform Quantization</span>
-      </div>
-      <h2 className="text-2xl font-bold text-white mb-2">4.3 Uniform Quantization Math: Scale & Zero-Point</h2>
-      <p className="text-xs text-slate-300 leading-relaxed mb-4">
-        Uniform quantization maps continuous floating-point values into discrete integer grid points using linear transformations.
-        We dissect the exact formulas used in runtime engines like llama.cpp and vLLM.
-      </p>
+  <Page tone="green" running="Part 4 · Uniform Quantization Math" part="Part 4">
+    <div className="kicker">Linear Mapping Mechanics</div>
+    <h1 className="big">Uniform Quantization Math: Scale &amp; Zero-Point</h1>
+    <p className="lead">
+      Uniform quantization maps continuous floating-point values into discrete integer grid points using linear transformations.
+      Here is the exact arithmetic executed by llama.cpp and vLLM.
+    </p>
 
-      <div className="grid grid-cols-2 gap-4 mb-4">
-        {/* Symmetric */}
-        <div className="bg-slate-800/80 p-4 rounded border border-slate-700">
-          <h4 className="text-xs font-bold text-emerald-300 uppercase tracking-wider mb-2 font-mono">Symmetric Quantization (Zero-Point = 0)</h4>
-          <p className="text-[11px] text-slate-300 mb-2 leading-relaxed">
-            The floating-point zero maps exactly to integer zero. Used predominantly for weights because weight distributions are symmetric around zero.
+    <div className="grid2 mt-s">
+      <Section title="Symmetric Quantization (Zero-Point = 0)" color="green">
+        <div className="card tone-green">
+          <b>Zero Maps to Zero</b>
+          <p style={{ fontSize: '7.4pt', margin: '1mm 0' }}>
+            Predominantly used for weights because weight distributions naturally center around zero.
           </p>
-          <div className="bg-slate-950 p-2.5 rounded font-mono text-[10px] text-emerald-400 space-y-1 mb-2">
-            <div>S = max(|X_min|, |X_max|) / (2^(b-1) - 1)</div>
-            <div>q = clip(round(X / S), -2^(b-1), 2^(b-1) - 1)</div>
-            <div>X_approx = q * S</div>
+          <div className="code-box" style={{ fontSize: '7.2pt', padding: '1.5mm 2mm', margin: '1.5mm 0' }}>
+            <code>S = max(|X_min|, |X_max|) / (2^(b-1) - 1)<br/>q = clip(round(X / S), -2^(b-1), 2^(b-1) - 1)<br/>X_approx = q &times; S</code>
           </div>
-          <div className="text-[10px] text-slate-400 space-y-1">
-            <p><strong>Benefit:</strong> Fast dequantization during SIMD execution. Integer multiply directly converts to float with a single broadcast multiply.</p>
-            <p><strong>Drawback:</strong> If distribution is skewed (e.g. ReLU activations &ge; 0), half of the integer bit space is completely wasted.</p>
-          </div>
-        </div>
-
-        {/* Asymmetric */}
-        <div className="bg-slate-800/80 p-4 rounded border border-slate-700">
-          <h4 className="text-xs font-bold text-sky-300 uppercase tracking-wider mb-2 font-mono">Asymmetric Quantization (With Zero-Point)</h4>
-          <p className="text-[11px] text-slate-300 mb-2 leading-relaxed">
-            Maps arbitrary arbitrary continuous intervals [X_min, X_max] across the entire integer range [0, 2^b - 1].
+          <p className="fine" style={{ margin: 0, fontSize: '7.2pt' }}>
+            <b>Benefit:</b> Zero overhead during SIMD decode; single broadcast scalar multiplication.
           </p>
-          <div className="bg-slate-950 p-2.5 rounded font-mono text-[10px] text-sky-400 space-y-1 mb-2">
-            <div>S = (X_max - X_min) / (2^b - 1)</div>
-            <div>Z = round(-X_min / S)</div>
-            <div>q = clip(round(X / S) + Z, 0, 2^b - 1)</div>
-            <div>X_approx = (q - Z) * S</div>
-          </div>
-          <div className="text-[10px] text-slate-400 space-y-1">
-            <p><strong>Benefit:</strong> Minimizes quantization noise on asymmetric data like post-activation tensors and attention scores.</p>
-            <p><strong>Drawback:</strong> Dequantization requires subtracting zero-point Z for every element: (q - Z)*S, adding overhead in SIMD inner loops.</p>
-          </div>
         </div>
-      </div>
+      </Section>
 
-      <div className="bg-slate-950 p-4 rounded border border-slate-800 mb-2">
-        <h4 className="text-xs font-bold text-slate-200 uppercase tracking-wider mb-2 font-mono">Granularity: Per-Tensor vs Per-Channel vs Group-Wise (Block-Wise)</h4>
-        <div className="grid grid-cols-3 gap-3 text-[10px]">
-          <div className="p-2 bg-slate-900 rounded border border-slate-800">
-            <div className="font-bold text-rose-400 mb-1">Per-Tensor Quantization</div>
-            <p className="text-slate-400">One scale factor S for the entire weight matrix (e.g. 4096x4096). Minimal metadata overhead, but unacceptable accuracy loss due to outlier dominance.</p>
+      <Section title="Asymmetric Quantization (With Zero-Point)" color="blue">
+        <div className="card tone-blue">
+          <b>Arbitrary Interval Mapping</b>
+          <p style={{ fontSize: '7.4pt', margin: '1mm 0' }}>
+            Maps asymmetric intervals [X_min, X_max] across the full integer range $[0, 2^b - 1]$.
+          </p>
+          <div className="code-box" style={{ fontSize: '7.2pt', padding: '1.5mm 2mm', margin: '1.5mm 0' }}>
+            <code>S = (X_max - X_min) / (2^b - 1)<br/>Z = round(-X_min / S)<br/>q = clip(round(X / S) + Z, 0, 2^b - 1)<br/>X_approx = (q - Z) &times; S</code>
           </div>
-          <div className="p-2 bg-slate-900 rounded border border-slate-800">
-            <div className="font-bold text-amber-400 mb-1">Per-Channel / Per-Row</div>
-            <p className="text-slate-400">One scale S per output channel. Standard for INT8 execution. Isolates channel-level scale variations effectively.</p>
-          </div>
-          <div className="p-2 bg-slate-900 rounded border border-slate-800">
-            <div className="font-bold text-emerald-400 mb-1">Group-Wise / Block-Wise (GGUF)</div>
-            <p className="text-slate-400">Divides each row into small blocks of 32 or 128 elements. Each block stores its own scale (and min). Crucial for retaining &gt;99% perplexity at 4-bit!</p>
-          </div>
+          <p className="fine" style={{ margin: 0, fontSize: '7.2pt' }}>
+            <b>Benefit:</b> Eliminates quantization noise on asymmetric data like post-ReLU activations.
+          </p>
+        </div>
+      </Section>
+    </div>
+
+    <Section title="Quantization Granularity Comparison" color="yellow" className="mt-s">
+      <div className="grid3">
+        <div className="card tone-red">
+          <b style={{ color: '#d93025' }}>Per-Tensor Quantization</b>
+          <p style={{ margin: 0, fontSize: '7.4pt' }}>One scale $S$ for the entire matrix ($4096 \times 4096$). Minimal metadata overhead, but severe accuracy loss due to outlier dominance.</p>
+        </div>
+        <div className="card tone-yellow">
+          <b style={{ color: '#b06000' }}>Per-Channel / Per-Row</b>
+          <p style={{ margin: 0, fontSize: '7.4pt' }}>One scale $S$ per output channel. Standard for INT8 execution. Effectively isolates channel-level scale variations.</p>
+        </div>
+        <div className="card tone-green">
+          <b style={{ color: '#188038' }}>Group-Wise / Block-Wise (GGUF)</b>
+          <p style={{ margin: 0, fontSize: '7.4pt' }}>Divides rows into small blocks of 32 or 128 elements. Each block stores its own scale. Preserves &gt;99% perplexity at 4-bit!</p>
         </div>
       </div>
-    </div>
-    <div className="text-[10px] text-slate-500 border-t border-slate-800 pt-2 flex justify-between font-mono">
-      <span>LLM INFERENCE FIELD GUIDE · RAMU MANGALARAPU</span>
-      <span>SECTION 4.3</span>
-    </div>
-  </div>
+    </Section>
+
+    <Callout title="Why Block Quantization Wins for 4-Bit" tone="green" className="mt-s">
+      Block-wise grouping (e.g., GGUF Q4_K blocks of 32 weights) ensures that an activation outlier in column 10
+      does not distort the quantization grid for column 100, maintaining high factual accuracy.
+    </Callout>
+  </Page>
 );
 
 export const AWQDeepDive = () => (
-  <div className="page flex flex-col justify-between p-10 bg-slate-900 text-slate-100 font-sans">
-    <div>
-      <div className="flex justify-between items-center border-b border-slate-700 pb-2 mb-4">
-        <span className="text-xs uppercase tracking-widest text-emerald-400 font-mono">Part IV · Quantization Mechanics · Page 4</span>
-        <span className="text-xs text-slate-400 font-mono">Advanced Post-Training Quantization</span>
-      </div>
-      <h2 className="text-2xl font-bold text-white mb-2">4.4 AWQ: Activation-aware Weight Quantization</h2>
-      <p className="text-xs text-slate-300 leading-relaxed mb-4">
-        Traditional quantization treats all weights equally. In 2023, MIT researchers proved that <strong>not all weights are equally important</strong>:
-        protecting just 1% of salient weights completely prevents model perplexity collapse under 4-bit quantization.
-      </p>
+  <Page tone="green" running="Part 4 · Activation-aware Quantization (AWQ)" part="Part 4">
+    <div className="kicker">Salient Weight Protection</div>
+    <h1 className="big">AWQ: Activation-aware Weight Quantization</h1>
+    <p className="lead">
+      Not all weights in a neural network are equally important. AWQ observes that preserving just 1% of salient weights
+      drastically reduces quantization error without requiring expensive backpropagation fine-tuning.
+    </p>
 
-      <div className="bg-slate-800/80 p-4 rounded border border-slate-700 mb-4">
-        <h4 className="text-xs font-bold text-emerald-300 uppercase tracking-wider mb-2 font-mono">The Fundamental Discovery: Activation Magnitude Determines Saliency</h4>
-        <p className="text-[11px] text-slate-300 leading-relaxed mb-2">
-          Looking only at weight magnitudes (|W|) is misleading. What truly matters is the impact of weight error on output activations:
-          &Delta;Y = (&Delta;W) &middot; X. Weights multiplied by large activations (X) produce disproportionately large output errors.
-        </p>
-        <div className="bg-slate-950 p-2.5 rounded font-mono text-[10px] text-emerald-400">
-          Saliency Score: S_j = &Sigma;_i |X_ij|  (Average activation magnitude of input channel j)
-        </div>
-      </div>
-
-      <div className="grid grid-cols-2 gap-4 mb-4">
-        <div className="bg-slate-800/80 p-4 rounded border border-slate-700">
-          <h4 className="text-xs font-bold text-sky-300 uppercase tracking-wider mb-2 font-mono">The Hardware Dilemma of Mixed Precision</h4>
-          <p className="text-[11px] text-slate-300 mb-2 leading-relaxed">
-            If only 1% of weights are salient, why not store 1% in FP16 and 99% in INT4?
+    <div className="grid2 mt-s">
+      <Section title="Salient Weight Identification" color="blue">
+        <div className="card tone-blue">
+          <b>Activation-Guided Importance</b>
+          <p style={{ fontSize: '7.4pt', margin: '1mm 0' }}>
+            Instead of judging importance by weight magnitude $|W|$, AWQ measures the magnitude of input activations $|X|$.
+            Weights multiplied by large activation magnitudes are classified as salient.
           </p>
-          <div className="text-[10px] text-slate-400 space-y-1">
-            <p className="text-rose-400"><strong>Hardware Bottleneck:</strong> Irregular sparsity requires sparse matrix kernels or indexing overhead, destroying memory coalescing and GPU SM occupancy.</p>
-            <p>Uniform INT4 matrix execution is vastly faster on Tensor Cores than irregular mixed-precision formats.</p>
+          <div className="code-box" style={{ fontSize: '7.2pt', padding: '1.5mm 2mm', margin: '1.5mm 0' }}>
+            <code>Salience Score = S_w = W &times; mean(|X_channel|)</code>
           </div>
-        </div>
-
-        <div className="bg-slate-800/80 p-4 rounded border border-slate-700">
-          <h4 className="text-xs font-bold text-emerald-300 uppercase tracking-wider mb-2 font-mono">The AWQ Mathematical Solution: Per-Channel Scaling</h4>
-          <p className="text-[11px] text-slate-300 mb-2 leading-relaxed">
-            Instead of keeping salient weights in FP16, AWQ multiplies salient weight channels by a scale factor <strong>s &gt; 1</strong>,
-            and divides corresponding activations by <strong>s</strong>:
+          <p className="fine" style={{ margin: 0, fontSize: '7.2pt' }}>
+            Protecting the top 1% salient channels reduces output perplexity error by up to 80% compared to round-to-nearest (RTN).
           </p>
-          <div className="bg-slate-950 p-2 rounded font-mono text-[10px] text-emerald-300">
-            Y = (W &middot; s) &middot; (s^-1 &middot; X) = W' &middot; X'
+        </div>
+      </Section>
+
+      <Section title="Per-Channel Scaling Transformation" color="green">
+        <div className="card tone-green">
+          <b>Mathematical Equivalence</b>
+          <p style={{ fontSize: '7.4pt', margin: '1mm 0' }}>
+            Rather than keeping salient weights in FP16 (which ruins regular memory layouts), AWQ scales salient channels before quantization:
+          </p>
+          <div className="code-box" style={{ fontSize: '7.2pt', padding: '1.5mm 2mm', margin: '1.5mm 0' }}>
+            <code>Y = W &times; X = (W &times; s) &times; (s^(-1) &times; X) = W_scaled &times; X_scaled</code>
           </div>
-          <p className="text-[10px] text-slate-400 mt-2">
-            By scaling up W, its relative quantization grid step becomes much finer, protecting the salient channel while keeping 100% of weights in regular INT4!
+          <p className="fine" style={{ margin: 0, fontSize: '7.2pt' }}>
+            Multiplying weights by scale factor $s &gt; 1$ lowers their relative quantization error while dividing input activations preserves exact mathematical output!
           </p>
         </div>
-      </div>
+      </Section>
+    </div>
 
-      <div className="bg-slate-950 p-3 rounded border border-slate-800 text-[10px]">
-        <h4 className="text-xs font-bold text-slate-200 mb-1 font-mono uppercase tracking-wider">AWQ Serving Advantages in vLLM</h4>
-        <ul className="list-disc list-inside text-slate-300 space-y-1">
-          <li><strong>No Retraining Required:</strong> Generates scale factors using only 128-512 calibration tokens from Pile or WikiText in under 10 minutes.</li>
-          <li><strong>Zero Inference Overhead:</strong> Scale factor s is folded directly into preceding LayerNorm or linear weight biases. Run-time execution is pure W4A16 GEMM.</li>
-          <li><strong>Superior Generalization:</strong> Unlike GPTQ which overfits to calibration distributions, AWQ scales preserve out-of-domain reasoning and code syntax.</li>
-        </ul>
+    <Section title="The AWQ 3-Step Pipeline" color="yellow" className="mt-s">
+      <div className="grid3">
+        <div className="card tone-blue">
+          <b style={{ color: '#1a73e8' }}>1. Calibration Pass</b>
+          <p style={{ margin: 0, fontSize: '7.4pt' }}>Feed 128-512 domain text tokens through FP16 model to record average channel activation magnitudes.</p>
+        </div>
+        <div className="card tone-yellow">
+          <b style={{ color: '#b06000' }}>2. Grid Search for Scales</b>
+          <p style={{ margin: 0, fontSize: '7.4pt' }}>Optimize per-channel scale factors $s$ to minimize mean-squared output reconstruction error.</p>
+        </div>
+        <div className="card tone-green">
+          <b style={{ color: '#188038' }}>3. Standard Quantization</b>
+          <p style={{ margin: 0, fontSize: '7.4pt' }}>Quantize scaled weights into standard 4-bit INT4 integers. Fuse inverse scale $s^{-1}$ into previous LayerNorm!</p>
+        </div>
       </div>
-    </div>
-    <div className="text-[10px] text-slate-500 border-t border-slate-800 pt-2 flex justify-between font-mono">
-      <span>LLM INFERENCE FIELD GUIDE · RAMU MANGALARAPU</span>
-      <span>SECTION 4.4</span>
-    </div>
-  </div>
+    </Section>
+
+    <Callout title="Why vLLM Prefers AWQ for GPU Serving" tone="blue" className="mt-s">
+      Because AWQ requires no backpropagation or complex matrix inversions, a 70B model can be quantized in under 15 minutes.
+      At runtime, fused GEMM kernels dequantize weights into registers with zero runtime activation scaling overhead!
+    </Callout>
+  </Page>
 );
 
 export const GPTQDeepDive = () => (
-  <div className="page flex flex-col justify-between p-10 bg-slate-900 text-slate-100 font-sans">
-    <div>
-      <div className="flex justify-between items-center border-b border-slate-700 pb-2 mb-4">
-        <span className="text-xs uppercase tracking-widest text-emerald-400 font-mono">Part IV · Quantization Mechanics · Page 5</span>
-        <span className="text-xs text-slate-400 font-mono">Second-Order Error Compensation</span>
-      </div>
-      <h2 className="text-2xl font-bold text-white mb-2">4.5 GPTQ: Hessian Inversion & Second-Order Error Minimization</h2>
-      <p className="text-xs text-slate-300 leading-relaxed mb-4">
-        GPTQ (Generative Pre-trained Transformer Quantization) approaches model compression as an optimization problem:
-        minimizing the mean squared error between full-precision and quantized layer outputs using second-order Taylor approximations.
-      </p>
+  <Page tone="green" running="Part 4 · Second-Order Error Compensation" part="Part 4">
+    <div className="kicker">Second-Order Error Compensation</div>
+    <h1 className="big">GPTQ: Hessian Inversion &amp; Layer Reconstruction</h1>
+    <p className="lead">
+      GPTQ is an advanced Post-Training Quantization (PTQ) method based on second-order Taylor expansion (Optimal Brain Surgeon),
+      compensating for quantization errors across remaining unquantized weights.
+    </p>
 
-      <div className="bg-slate-800/80 p-4 rounded border border-slate-700 mb-4">
-        <h4 className="text-xs font-bold text-emerald-300 uppercase tracking-wider mb-2 font-mono">The Optimal Brain Surgeon (OBS) Formulation</h4>
-        <p className="text-[11px] text-slate-300 leading-relaxed mb-2">
-          When weight parameter w_q is rounded to integer q_q, it creates an error &delta;w_q = round(w_q) - w_q.
-          To prevent output corruption, all remaining unquantized weights in the layer must be updated by vector &Delta;w to compensate:
-        </p>
-        <div className="bg-slate-950 p-2.5 rounded font-mono text-[10px] text-emerald-400 mb-2">
-          argmin_&Delta;w &frac12; &Delta;w^T &middot; H &middot; &Delta;w  subject to &Delta;w_q = round(w_q) - w_q<br/>
-          Optimal Weight Update: &Delta;w = - (w_q - round(w_q)) / [H^-1]_qq &middot; H^-1_q
-        </div>
-        <p className="text-[10px] text-slate-400">
-          Where <strong>H = 2 &middot; X &middot; X^T</strong> is the Hessian matrix of layer inputs. GPTQ computes H^-1 once per layer,
-          then quantizes columns iteratively while compensating future weights.
-        </p>
-      </div>
-
-      <div className="grid grid-cols-2 gap-4 mb-4">
-        <div className="bg-slate-800/80 p-4 rounded border border-slate-700">
-          <h4 className="text-xs font-bold text-sky-300 uppercase tracking-wider mb-2 font-mono">Cholesky Decomposition Acceleration</h4>
-          <p className="text-[11px] text-slate-300 mb-2 leading-relaxed">
-            Inverting a 4096x4096 Hessian directly for every column takes O(d^3) operations, requiring months for a 70B model.
+    <div className="grid2 mt-s">
+      <Section title="The Optimal Brain Surgeon Objective" color="red">
+        <div className="card tone-red">
+          <b>Quadratic Error Minimization</b>
+          <p style={{ fontSize: '7.4pt', margin: '1mm 0' }}>
+            When weight $w_q$ is quantized to w_hat_q, it incurs error Delta w_q = w_hat_q - w_q. To cancel this error,
+            GPTQ updates all remaining unquantized weights w_-q using the inverse Hessian matrix H^-1:
           </p>
-          <div className="text-[10px] text-slate-400 space-y-1">
-            <p>GPTQ utilizes Cholesky decomposition of the inverse Hessian matrix, allowing batch updates of 128 columns simultaneously (Block-wise quantization).</p>
-            <p>Quantizes a full 175B parameter model in roughly 4 GPU hours.</p>
+          <div className="code-box" style={{ fontSize: '7.2pt', padding: '1.5mm 2mm', margin: '1.5mm 0' }}>
+            <code>{"\\Delta w = - (w_q - \\hat{w}_q) / [H^(-1)]_qq \\times H^(-1)_{:, q}"}</code>
           </div>
-        </div>
-
-        <div className="bg-slate-800/80 p-4 rounded border border-slate-700">
-          <h4 className="text-xs font-bold text-amber-300 uppercase tracking-wider mb-2 font-mono">The Act-Order (Descend-Order) Trick</h4>
-          <p className="text-[11px] text-slate-300 mb-2 leading-relaxed">
-            Columns with highest diagonal inverse Hessian elements are quantized first.
+          <p className="fine" style={{ margin: 0, fontSize: '7.2pt' }}>
+            Where the Hessian is estimated from calibration activations: $H = 2 X X^T$.
           </p>
-          <div className="text-[10px] text-slate-400 space-y-1">
-            <p>By quantizing high-error columns early, subsequent weights have maximum degrees of freedom to compensate for the rounding error.</p>
-            <p className="text-rose-400">Tradeoff: Act-order complicates kernel memory layouts, requiring special permute tables during CUDA execution.</p>
-          </div>
         </div>
-      </div>
+      </Section>
 
-      <div className="bg-slate-950 p-3 rounded border border-slate-800 text-[10px]">
-        <h4 className="text-xs font-bold text-slate-200 mb-1 font-mono uppercase tracking-wider">Comparison: GPTQ vs AWQ in Production</h4>
-        <div className="grid grid-cols-2 gap-4 text-slate-300">
-          <div>
-            <strong className="text-sky-300">GPTQ Best Use Case:</strong> Low-cost GPU inference where VRAM is constrained (e.g. running 13B models on single RTX 3090 / 4090 with ExLlamaV2 kernels).
+      <Section title="Cholesky Factorization &amp; Block Updates" color="yellow">
+        <div className="card tone-yellow">
+          <b>O(d^3) Computational Efficiency</b>
+          <p style={{ fontSize: '7.4pt', margin: '1mm 0' }}>
+            Standard OBS takes days to quantize a large model. GPTQ computes Cholesky decomposition of H^-1 once per layer
+            and quantizes weights in blocks of 128 columns simultaneously.
+          </p>
+          <div className="code-box" style={{ fontSize: '7.2pt', padding: '1.5mm 2mm', margin: '1.5mm 0' }}>
+            <code>H^(-1) = L &times; L^T &bull; Block Lazy Updates on GPU</code>
           </div>
-          <div>
-            <strong className="text-emerald-300">AWQ Best Use Case:</strong> Enterprise vLLM serving clusters. Native Marlin kernel integration, better zero-shot reasoning retention, and cleaner deployment pipelines.
-          </div>
+          <p className="fine" style={{ margin: 0, fontSize: '7.2pt' }}>
+            Reduces quantization time for a 7B model from 30 hours down to approximately 4 minutes on a single GPU.
+          </p>
+        </div>
+      </Section>
+    </div>
+
+    <Section title="Comparing AWQ vs GPTQ in Serving Practice" color="green" className="mt-s">
+      <div className="grid3">
+        <div className="card tone-green">
+          <b>Inference Speed</b>
+          <p style={{ margin: 0, fontSize: '7.4pt' }}>Both formats pack into W4A16 GEMM kernels. Runtime throughput in vLLM is virtually identical (~18–24 tok/s on consumer GPUs).</p>
+        </div>
+        <div className="card tone-blue">
+          <b>Calibration Sensitivity</b>
+          <p style={{ margin: 0, fontSize: '7.4pt' }}>GPTQ is slightly more sensitive to calibration dataset distribution; AWQ generalizes better across out-of-domain prompts.</p>
+        </div>
+        <div className="card tone-yellow">
+          <b>Quantization Time</b>
+          <p style={{ margin: 0, fontSize: '7.4pt' }}>AWQ grid search is faster and uses less VRAM during quantization than GPTQ Cholesky Hessian inversion.</p>
         </div>
       </div>
-    </div>
-    <div className="text-[10px] text-slate-500 border-t border-slate-800 pt-2 flex justify-between font-mono">
-      <span>LLM INFERENCE FIELD GUIDE · RAMU MANGALARAPU</span>
-      <span>SECTION 4.5</span>
-    </div>
-  </div>
+    </Section>
+
+    <Callout title="Engineering Rule of Thumb" tone="green" className="mt-s">
+      For CUDA/Triton deployments on NVIDIA GPUs with vLLM, choose <b>AWQ</b> for superior out-of-distribution stability.
+      For CPU-only local execution with llama.cpp/Ollama, choose <b>GGUF K-quants</b>.
+    </Callout>
+  </Page>
 );
 
 export const SmoothQuantAndW8A8 = () => (
-  <div className="page flex flex-col justify-between p-10 bg-slate-900 text-slate-100 font-sans">
-    <div>
-      <div className="flex justify-between items-center border-b border-slate-700 pb-2 mb-4">
-        <span className="text-xs uppercase tracking-widest text-emerald-400 font-mono">Part IV · Quantization Mechanics · Page 6</span>
-        <span className="text-xs text-slate-400 font-mono">Weight-Activation Quantization</span>
-      </div>
-      <h2 className="text-2xl font-bold text-white mb-2">4.6 SmoothQuant: Tackling Activation Outliers for W8A8 Compute</h2>
-      <p className="text-xs text-slate-300 leading-relaxed mb-4">
-        While W4A16 reduces memory traffic, matrix multiplications are still executed on floating-point arithmetic units.
-        To unlock the full 2x-4x compute throughput of <strong>INT8 Tensor Cores</strong>, both weights and activations must be INT8 (W8A8).
-      </p>
+  <Page tone="green" running="Part 4 · W8A8 Tensor Cores & SmoothQuant" part="Part 4">
+    <div className="kicker">W8A8 Matrix Multiplication</div>
+    <h1 className="big">SmoothQuant: Tackling Activation Outliers</h1>
+    <p className="lead">
+      While weight-only quantization (W4A16) accelerates memory-bound decode, high-batch serving (prefill and enterprise concurrency)
+      requires accelerating compute-bound matrix multiplications using INT8 Tensor Cores (W8A8).
+    </p>
 
-      <div className="bg-slate-800/80 p-4 rounded border border-slate-700 mb-4">
-        <h4 className="text-xs font-bold text-emerald-300 uppercase tracking-wider mb-2 font-mono">The Outlier Dilemma in Activations</h4>
-        <p className="text-[11px] text-slate-300 leading-relaxed mb-2">
-          Weights are easy to quantize to INT8 because their distributions are bounded. Activations, however, exhibit <strong>systematic channel outliers</strong>:
-          in LLMs &gt;6.7B parameters, specific hidden dimensions develop activation spikes that are 100x larger than typical tokens.
-        </p>
-        <div className="bg-slate-950 p-2.5 rounded font-mono text-[10px] text-amber-300 mb-2">
-          Typical hidden state token: [-0.5, 0.4, 0.8, -0.2]<br/>
-          Outlier channel across all tokens: [85.4, 92.1, 88.0, 94.3]
+    <div className="grid2 mt-s">
+      <Section title="The Activation Outlier Barrier" color="red">
+        <div className="card tone-red">
+          <b>Why W8A8 Fails Naively</b>
+          <p style={{ fontSize: '7.4pt', margin: '1mm 0' }}>
+            Weights are easy to quantize to INT8. Activations, however, develop systematic outliers up to 100&times; larger than normal values
+            in specific channels across all tokens.
+          </p>
+          <p className="fine" style={{ margin: 0, fontSize: '7.2pt' }}>
+            Per-tensor activation quantization collapses normal features into 0, destroying LLM reasoning abilities completely.
+          </p>
         </div>
-        <p className="text-[10px] text-slate-400">
-          Quantizing activations per-tensor wipes out the precision of all 4095 normal channels to accommodate channel #4096.
-          Per-token dynamic quantization also fails because the outlier channel dominates every token.
-        </p>
-      </div>
+      </Section>
 
-      <div className="bg-slate-850 p-4 rounded border border-slate-700 mb-4 bg-slate-800/80">
-        <h4 className="text-xs font-bold text-sky-300 uppercase tracking-wider mb-2 font-mono">The SmoothQuant Migration Transformation</h4>
-        <p className="text-[11px] text-slate-300 leading-relaxed mb-2">
-          SmoothQuant observes that weights are smooth and easy to quantize, while activations are spiky.
-          The solution: <strong>mathematically migrate quantization difficulty from activations to weights</strong> via diagonal scaling matrix S:
-        </p>
-        <div className="bg-slate-950 p-2 rounded font-mono text-[10px] text-emerald-400 mb-2">
-          Y = (X &middot; diag(s)^-1) &middot; (diag(s) &middot; W) = X_smooth &middot; W_smooth<br/>
-          Scale Factor: s_j = max(|X_j|)^&alpha; / max(|W_j|)^(1 - &alpha;)   where &alpha; &isin; [0, 1]
-        </div>
-        <p className="text-[10px] text-slate-400">
-          Setting migration strength &alpha; = 0.5 splits the difficulty equally: activation outlier channels are divided by ~10x,
-          while weight channels are multiplied by 10x. Both sides become trivially quantizable to INT8!
-        </p>
-      </div>
-
-      <div className="bg-slate-950 p-3 rounded border border-slate-800 text-[10px]">
-        <h4 className="text-xs font-bold text-slate-200 mb-1 font-mono uppercase tracking-wider">Serving Implications of W8A8</h4>
-        <div className="grid grid-cols-2 gap-4 text-slate-300">
-          <div>
-            <strong className="text-emerald-400">Prefill Throughput Surge:</strong> Prefill phase is compute-bound. INT8 DP4A (CPU) and INT8 Tensor Cores (GPU) deliver 2x higher FLOPS/Watt than FP16.
+      <Section title="The SmoothQuant Mathematical Scale" color="green">
+        <div className="card tone-green">
+          <b>Migrating Quantization Difficulty</b>
+          <p style={{ fontSize: '7.4pt', margin: '1mm 0' }}>
+            SmoothQuant divides activation channels by smoothing factor $s$ while multiplying corresponding weight rows by $s$:
+          </p>
+          <div className="code-box" style={{ fontSize: '7.2pt', padding: '1.5mm 2mm', margin: '1.5mm 0' }}>
+            <code>Y = (X &times; diag(s)^(-1)) &times; (diag(s) &times; W) = X_hat &times; W_hat</code>
           </div>
-          <div>
-            <strong className="text-sky-400">Zero Run-time Overhead:</strong> Weight scaling is pre-computed offline. Activation scaling is folded into preceding LayerNorm affine parameters.
-          </div>
+          <p className="fine" style={{ margin: 0, fontSize: '7.2pt' }}>
+            Balancing migration strength $\alpha = 0.5$ splits difficulty equally between weights and activations, enabling smooth INT8 GEMM.
+          </p>
+        </div>
+      </Section>
+    </div>
+
+    <Section title="INT8 Tensor Core Serving Benefits" color="blue" className="mt-s">
+      <div className="grid3">
+        <div className="card tone-blue">
+          <b>2&times; Higher Prefill Throughput</b>
+          <p style={{ margin: 0, fontSize: '7.4pt' }}>NVIDIA INT8 Tensor Cores deliver double the peak TFLOPs of FP16, halving Time-to-First-Token (TTFT) on large prompts.</p>
+        </div>
+        <div className="card tone-green">
+          <b>50% Memory Reduction</b>
+          <p style={{ margin: 0, fontSize: '7.4pt' }}>Cuts model VRAM from 14 GB to 7 GB for a 7B model, allowing twice the continuous batching concurrency on a single GPU.</p>
+        </div>
+        <div className="card tone-yellow">
+          <b>Zero Degraded Perplexity</b>
+          <p style={{ margin: 0, fontSize: '7.4pt' }}>Achieves less than 0.1 perplexity delta compared to FP16 baseline on models from 7B to 175B parameters.</p>
         </div>
       </div>
-    </div>
-    <div className="text-[10px] text-slate-500 border-t border-slate-800 pt-2 flex justify-between font-mono">
-      <span>LLM INFERENCE FIELD GUIDE · RAMU MANGALARAPU</span>
-      <span>SECTION 4.6</span>
-    </div>
-  </div>
+    </Section>
+
+    <Callout title="Production Deployment Reality" tone="yellow" className="mt-s">
+      W8A8 with SmoothQuant is the production gold standard for enterprise API gateways (like LiteLLM routing to TensorRT-LLM)
+      serving hundreds of concurrent enterprise users simultaneously.
+    </Callout>
+  </Page>
 );
 
 export const GGUFDeepDive = () => (
-  <div className="page flex flex-col justify-between p-10 bg-slate-900 text-slate-100 font-sans">
-    <div>
-      <div className="flex justify-between items-center border-b border-slate-700 pb-2 mb-4">
-        <span className="text-xs uppercase tracking-widest text-emerald-400 font-mono">Part IV · Quantization Mechanics · Page 7</span>
-        <span className="text-xs text-slate-400 font-mono">Modern File Formats & Architecture</span>
-      </div>
-      <h2 className="text-2xl font-bold text-white mb-2">4.7 The GGUF Format: Single-Binary Storage & Mmap Loading</h2>
-      <p className="text-xs text-slate-300 leading-relaxed mb-4">
-        Deploying models across heterogeneous edge systems requires robust file formats.
-        The transition from GGML to <strong>GGUF (GPT-Generated Unified Format)</strong> revolutionized CPU and edge LLM serving.
-      </p>
+  <Page tone="green" running="Part 4 · GGUF Format & CPU Execution" part="Part 4">
+    <div className="kicker">Binary Architecture &amp; ggml/llama.cpp</div>
+    <h1 className="big">The GGUF Format: Single-Binary Storage &amp; CPU SIMD</h1>
+    <p className="lead">
+      GGUF (GPT-Generated Unified Format) is the modern open binary specification created by Georgi Gerganov and the llama.cpp team,
+      powering fast local inference on edge hardware, WSL2, and Apple Silicon.
+    </p>
 
-      {/* Binary Layout Diagram */}
-      <div className="bg-slate-950 p-3 rounded border border-slate-800 font-mono text-[10px] mb-4">
-        <div className="text-emerald-400 font-bold mb-2">// GGUF Binary File Specification (Little-Endian)</div>
-        <div className="space-y-1 text-slate-300">
-          <div className="bg-slate-900 p-1.5 rounded border border-slate-800 flex justify-between">
-            <span className="text-sky-300 font-bold">1. Magic Number & Version</span>
-            <span className="text-slate-400">0x46554747 ('GGUF') | uint32 version (3)</span>
-          </div>
-          <div className="bg-slate-900 p-1.5 rounded border border-slate-800 flex justify-between">
-            <span className="text-amber-300 font-bold">2. Tensor Count & Metadata Count</span>
-            <span className="text-slate-400">uint64 tensor_count | uint64 metadata_kv_count</span>
-          </div>
-          <div className="bg-slate-900 p-1.5 rounded border border-slate-800 flex justify-between">
-            <span className="text-purple-300 font-bold">3. Key-Value Metadata Pairs</span>
-            <span className="text-slate-400">Architecture, context_length, RoPE freq, tokenizer vocab & merges</span>
-          </div>
-          <div className="bg-slate-900 p-1.5 rounded border border-slate-800 flex justify-between">
-            <span className="text-rose-300 font-bold">4. Tensor Info Headers</span>
-            <span className="text-slate-400">Name, dimensions (n_dims), type (Q4_K_M, F16), byte offset</span>
-          </div>
-          <div className="bg-emerald-950/40 p-2 rounded border border-emerald-500/40 flex justify-between">
-            <span className="text-emerald-300 font-bold">5. Memory-Aligned Tensor Data</span>
-            <span className="text-emerald-400">Raw weight blocks aligned to 32-byte / page boundaries for mmap()</span>
-          </div>
+    <div className="grid2 mt-s">
+      <Section title="GGUF Binary File Architecture" color="green">
+        <div className="card tone-green">
+          <b>Single-File Self-Contained Binary</b>
+          <ul className="meta-list" style={{ marginTop: '1.5mm', fontSize: '7.4pt' }}>
+            <li><b>Header:</b> Magic number <code>0x46554747</code> (<code>GGUF</code> in ASCII), version (v3), tensor count, metadata KV count.</li>
+            <li><b>Metadata KV:</b> Embedded tokenizer vocabulary, merge tables, context length, architecture type (qwen2, llama), and chat template.</li>
+            <li><b>Tensor Info Table:</b> Offsets, dimensions, and quantization type for every layer weight tensor.</li>
+            <li><b>Aligned Tensor Data:</b> 32-byte aligned raw quantized weight buffers directly mapped via Linux <code>mmap()</code>.</li>
+          </ul>
         </div>
-      </div>
+      </Section>
 
-      <div className="grid grid-cols-2 gap-4 mb-4">
-        <div className="bg-slate-800/80 p-4 rounded border border-slate-700">
-          <h4 className="text-xs font-bold text-emerald-300 uppercase tracking-wider mb-2 font-mono">Zero-Copy Ingestion via mmap()</h4>
-          <p className="text-[11px] text-slate-300 mb-2 leading-relaxed">
-            Traditional Python loaders read multi-gigabyte PyTorch checkpoints into RAM, duplicate tensors during casting, and take minutes to start.
+      <Section title="The K-Quant Block Hierarchy" color="blue">
+        <div className="card tone-blue">
+          <b>Super-Blocks &amp; Sub-Blocks</b>
+          <p style={{ fontSize: '7.4pt', margin: '1mm 0' }}>
+            Standard GGUF formats (like <code>Q4_K_M</code> used in our lab) partition rows into super-blocks of 256 weights:
           </p>
-          <div className="text-[10px] text-slate-400 space-y-1">
-            <p>GGUF files are mapped directly into the process virtual address space via POSIX <code>mmap()</code>.</p>
-            <p className="text-emerald-400"><strong>Instant Start:</strong> Startup latency drops from 45 seconds to <strong>50 milliseconds</strong>. Linux Kernel page cache lazily loads weights on demand.</p>
-          </div>
+          <ul className="meta-list" style={{ fontSize: '7.2pt' }}>
+            <li><b>Super-block (256 weights):</b> Stores master 16-bit FP16 scale $d$ and minimum value d_min.</li>
+            <li><b>8 Sub-blocks (32 weights each):</b> Store 6-bit quantization scales and 4-bit integer nibbles.</li>
+            <li><b>Mixed Quantization (K_M):</b> Critical attention heads (v_proj, output) kept in 5-bit or 6-bit; feed-forward in 4-bit!</li>
+          </ul>
         </div>
+      </Section>
+    </div>
 
-        <div className="bg-slate-800/80 p-4 rounded border border-slate-700">
-          <h4 className="text-xs font-bold text-sky-300 uppercase tracking-wider mb-2 font-mono">Self-Contained Single File Deployment</h4>
-          <p className="text-[11px] text-slate-300 mb-2 leading-relaxed">
-            Unlike Hugging Face repositories split across 10 JSON config files and 5 safetensors shards:
-          </p>
-          <div className="text-[10px] text-slate-400 space-y-1">
-            <p>A GGUF file embeds tokenizer vocabularies, BPE merges, chat templates, and architectural hyperparameters directly in its header.</p>
-            <p>Ollama or llama.cpp can serve a model with zero internet access, zero Python dependencies, and zero configuration files.</p>
-          </div>
+    <Section title="Why GGUF Dominates Local &amp; Edge Serving" color="yellow" className="mt-s">
+      <div className="grid3">
+        <div className="card tone-green">
+          <b>Zero-Copy mmap Loading</b>
+          <p style={{ margin: 0, fontSize: '7.4pt' }}>Loads model weights instantly without allocating heap copies. The Linux kernel pages weights directly from NVMe SSD into page cache on demand.</p>
+        </div>
+        <div className="card tone-blue">
+          <b>Vector SIMD Kernels</b>
+          <p style={{ margin: 0, fontSize: '7.4pt' }}>Handcrafted Intel AVX2, AVX-512, and ARM NEON intrinsics unpack 4-bit nibbles and compute FMA matrix operations in hardware registers.</p>
+        </div>
+        <div className="card tone-yellow">
+          <b>Flexible GPU Offloading</b>
+          <p style={{ margin: 0, fontSize: '7.4pt' }}>Supports partial layer offloading: run 16 layers in VRAM and 8 layers in system RAM seamlessly without crashing.</p>
         </div>
       </div>
+    </Section>
 
-      <div className="bg-slate-950 p-3 rounded border border-slate-800 text-[10px]">
-        <h4 className="text-xs font-bold text-slate-200 mb-1 font-mono uppercase tracking-wider">K-Quants in GGUF: Q4_K_M Breakdown</h4>
-        <p className="text-slate-300 leading-relaxed">
-          In our lab testbed with <code>qwen2.5:0.5b</code>, Ollama uses <strong>Q4_K_M (Medium K-Quant)</strong>.
-          Instead of uniform 4-bit across all layers, critical layers (attention V-projection and output down-projection) are retained in 6-bit (Q6_K),
-          while feedforward intermediate projections use 4-bit (Q4_K). This hybrid allocation achieves FP16 perplexity within 0.1% while slashing RAM to 398 MB!
-        </p>
-      </div>
-    </div>
-    <div className="text-[10px] text-slate-500 border-t border-slate-800 pt-2 flex justify-between font-mono">
-      <span>LLM INFERENCE FIELD GUIDE · RAMU MANGALARAPU</span>
-      <span>SECTION 4.7</span>
-    </div>
-  </div>
+    <Callout title="Empirical Lab Verification" tone="green" className="mt-s">
+      Our Stage 1 Ollama deployment runs <code>qwen2.5:0.5b</code> packaged in GGUF Q4_K_M (398 MB).
+      On our 4-core Intel i5 laptop with AVX2 SIMD, it starts up in 180 ms and decodes at 24 tokens/sec!
+    </Callout>
+  </Page>
 );
 
 export const QuantizationMatrix = () => (
-  <div className="page flex flex-col justify-between p-10 bg-slate-900 text-slate-100 font-sans">
-    <div>
-      <div className="flex justify-between items-center border-b border-slate-700 pb-2 mb-4">
-        <span className="text-xs uppercase tracking-widest text-emerald-400 font-mono">Part IV · Quantization Mechanics · Page 8</span>
-        <span className="text-xs text-slate-400 font-mono">Quantization Tradeoff Matrix & Benchmarks</span>
-      </div>
-      <h2 className="text-2xl font-bold text-white mb-2">4.8 Precision, Perplexity & Hardware Tradeoff Matrix</h2>
-      <p className="text-xs text-slate-300 leading-relaxed mb-4">
-        Engineering production inference requires selecting the optimal quantization scheme for specific SLA, budget, and memory limits.
-        Below is the authoritative empirical comparison across precision types.
-      </p>
+  <Page tone="green" running="Part 4 · Precision Selection Matrix" part="Part 4">
+    <div className="kicker">Empirical Benchmarks &amp; Selection Framework</div>
+    <h1 className="big">Precision, Perplexity &amp; Hardware Tradeoffs</h1>
+    <p className="lead">
+      A comprehensive production decision matrix comparing quantization methods across memory footprint,
+      perplexity degradation, and optimal runtime platforms.
+    </p>
 
-      {/* Comparison Table */}
-      <div className="overflow-x-auto mb-4">
-        <table className="w-full text-left font-mono text-[9px] border-collapse">
+    <Section title="Comprehensive Quantization Benchmark Matrix" color="green" className="mt-s">
+      <div className="table-wrap">
+        <table>
           <thead>
-            <tr className="border-b border-slate-700 bg-slate-800/80 text-slate-300">
-              <th className="p-2">Format</th>
-              <th className="p-2">Bits/Param</th>
-              <th className="p-2">Memory Footprint</th>
-              <th className="p-2">Perplexity Delta (&Delta;PPL)</th>
-              <th className="p-2">SIMD Acceleration Kernel</th>
-              <th className="p-2">Recommended Serving Target</th>
+            <tr>
+              <th>Method</th>
+              <th>Bits/Weight</th>
+              <th>VRAM (7B)</th>
+              <th>Perplexity Delta</th>
+              <th>Target Runtime</th>
+              <th>Primary Production Use Case</th>
             </tr>
           </thead>
-          <tbody className="divide-y divide-slate-800 text-slate-300">
+          <tbody>
             <tr>
-              <td className="p-2 font-bold text-white">FP16 / BF16</td>
-              <td className="p-2">16.0</td>
-              <td className="p-2">100% (Baseline)</td>
-              <td className="p-2 text-emerald-400 font-bold">0.00 (Reference)</td>
-              <td className="p-2 text-slate-400">Native FP16 CUDA / FMA AVX2</td>
-              <td className="p-2 text-slate-400">High-budget GPU clusters, base training</td>
-            </tr>
-            <tr className="bg-slate-950/40">
-              <td className="p-2 font-bold text-sky-300">INT8 (W8A8)</td>
-              <td className="p-2">8.0</td>
-              <td className="p-2 text-sky-400">50%</td>
-              <td className="p-2 text-emerald-400 font-bold">+0.02 (Negligible)</td>
-              <td className="p-2 text-sky-300">INT8 Tensor Core / AVX2 VNNI</td>
-              <td className="p-2 text-sky-200">High-throughput prefill clusters (SmoothQuant)</td>
+              <td><b>FP16 / BF16</b></td>
+              <td>16.0</td>
+              <td>14.0 GB</td>
+              <td>0.00 (Baseline)</td>
+              <td>PyTorch / vLLM</td>
+              <td>Model fine-tuning, training, reference verification</td>
             </tr>
             <tr>
-              <td className="p-2 font-bold text-emerald-300">AWQ (W4A16)</td>
-              <td className="p-2">4.0</td>
-              <td className="p-2 text-emerald-400">25%</td>
-              <td className="p-2 text-emerald-400 font-bold">+0.05</td>
-              <td className="p-2 text-emerald-300">Marlin / ExLlamaV2 CUDA</td>
-              <td className="p-2 text-emerald-200">Production vLLM serving on NVIDIA GPUs</td>
-            </tr>
-            <tr className="bg-slate-950/40">
-              <td className="p-2 font-bold text-purple-300">GPTQ (W4A16)</td>
-              <td className="p-2">4.0</td>
-              <td className="p-2 text-purple-400">25%</td>
-              <td className="p-2 text-emerald-400 font-bold">+0.08</td>
-              <td className="p-2 text-purple-300">ExLlamaV2 / Triton GEMM</td>
-              <td className="p-2 text-purple-200">Consumer GPU servers (24GB VRAM)</td>
+              <td><b>SmoothQuant (W8A8)</b></td>
+              <td>8.0</td>
+              <td>7.0 GB</td>
+              <td>+0.05</td>
+              <td>TensorRT-LLM</td>
+              <td>High-throughput enterprise API gateways (concurrency &gt; 50)</td>
             </tr>
             <tr>
-              <td className="p-2 font-bold text-amber-300">GGUF Q4_K_M</td>
-              <td className="p-2">~4.5</td>
-              <td className="p-2 text-amber-400">28%</td>
-              <td className="p-2 text-emerald-400 font-bold">+0.06</td>
-              <td className="p-2 text-amber-300">AVX2 / AVX-512 / ARM NEON</td>
-              <td className="p-2 text-amber-200 font-bold">CPU & Laptop Inference (Our WSL2 Lab!)</td>
+              <td><b>FP8 (E4M3)</b></td>
+              <td>8.0</td>
+              <td>7.0 GB</td>
+              <td>+0.03</td>
+              <td>vLLM (Hopper/Ada)</td>
+              <td>Next-gen enterprise GPU clusters (H100, L40S, RTX 4090)</td>
             </tr>
-            <tr className="bg-slate-950/40">
-              <td className="p-2 font-bold text-rose-300">GGUF Q2_K</td>
-              <td className="p-2">~2.6</td>
-              <td className="p-2 text-rose-400">16%</td>
-              <td className="p-2 text-rose-400 font-bold">+1.85 (Degradation)</td>
-              <td className="p-2 text-rose-300">llama.cpp custom 2-bit kernel</td>
-              <td className="p-2 text-rose-200">Extreme edge IoT, Raspberry Pi with &lt;2GB RAM</td>
+            <tr>
+              <td><b>AWQ (W4A16)</b></td>
+              <td>4.0</td>
+              <td>3.9 GB</td>
+              <td>+0.12</td>
+              <td>vLLM / SGLang</td>
+              <td>Cost-effective cloud GPU serving (T4, A10G, L4)</td>
+            </tr>
+            <tr>
+              <td><b>GPTQ (W4A16)</b></td>
+              <td>4.0</td>
+              <td>3.9 GB</td>
+              <td>+0.14</td>
+              <td>AutoGPTQ / vLLM</td>
+              <td>Single-GPU self-hosted consumer deployments</td>
+            </tr>
+            <tr>
+              <td><b>GGUF Q4_K_M</b></td>
+              <td>4.5</td>
+              <td>3.9 GB</td>
+              <td>+0.11</td>
+              <td>Ollama / llama.cpp</td>
+              <td><b>CPU-only laptops, edge devices, and WSL2 developer machines</b></td>
+            </tr>
+            <tr>
+              <td><b>GGUF Q2_K</b></td>
+              <td>2.6</td>
+              <td>2.3 GB</td>
+              <td>+2.45</td>
+              <td>llama.cpp</td>
+              <td>Extreme memory constraint testing (severe quality degradation)</td>
             </tr>
           </tbody>
         </table>
       </div>
+    </Section>
 
-      <div className="grid grid-cols-2 gap-4 mb-4">
-        <div className="bg-slate-800/80 p-3 rounded border border-slate-700">
-          <h4 className="text-xs font-bold text-emerald-300 uppercase tracking-wider mb-1 font-mono">The Sweet Spot: 4-Bit vs 8-Bit</h4>
-          <p className="text-[10px] text-slate-300 leading-relaxed">
-            Extensive empirical evaluations (Dettmers et al.) establish that <strong>4-bit precision offers the optimal tradeoff between model accuracy and bit savings</strong>.
-            Going from 16-bit to 4-bit delivers a 4x reduction in RAM with less than 1% perplexity drop. Moving from 4-bit to 3-bit or 2-bit causes sharp non-linear degradation.
-          </p>
+    <Section title="Production Architecture Decision Framework" color="blue" className="mt-s">
+      <div className="grid3">
+        <div className="card tone-green">
+          <b>Edge &amp; Local Dev (No GPU)</b>
+          <p style={{ margin: 0, fontSize: '7.4pt' }}><b>Choose GGUF Q4_K_M:</b> Optimal balance of CPU AVX2 memory streaming bandwidth and factual perplexity preservation.</p>
         </div>
-
-        <div className="bg-slate-800/80 p-3 rounded border border-slate-700">
-          <h4 className="text-xs font-bold text-sky-300 uppercase tracking-wider mb-1 font-mono">Larger Quantized Model vs Smaller Dense Model</h4>
-          <p className="text-[10px] text-slate-300 leading-relaxed">
-            A critical rule of thumb for systems architects: <strong>A 14B model quantized to 4-bit almost always outperforms an unquantized 7B model in FP16</strong>,
-            even though both occupy approximately the same 8 GB of system memory. Parameter diversity outweighs raw weight precision.
-          </p>
+        <div className="card tone-blue">
+          <b>Cloud GPU Single-Stream</b>
+          <p style={{ margin: 0, fontSize: '7.4pt' }}><b>Choose AWQ W4A16:</b> Minimizes GPU VRAM requirement on cloud nodes, fitting 70B models onto a single 48GB A40 GPU.</p>
+        </div>
+        <div className="card tone-yellow">
+          <b>High-Concurrency Gateway</b>
+          <p style={{ margin: 0, fontSize: '7.4pt' }}><b>Choose W8A8 / FP8:</b> Unlocks INT8 Tensor Core compute capacity for prefill-heavy RAG pipelines and multi-tenant clusters.</p>
         </div>
       </div>
+    </Section>
 
-      <div className="bg-slate-950 p-2.5 rounded border border-slate-800 text-[10px] text-slate-400 font-mono">
-        <strong>WSL2 Lab Validation:</strong> Deploying <code>qwen2.5:0.5b</code> in Q4_K_M consumes 398 MB RSS, allowing instant startup in our KServe container under a strict 256 MiB container footprint (with host bridge) or 512 MiB standalone limit.
-      </div>
-    </div>
-    <div className="text-[10px] text-slate-500 border-t border-slate-800 pt-2 flex justify-between font-mono">
-      <span>LLM INFERENCE FIELD GUIDE · RAMU MANGALARAPU</span>
-      <span>SECTION 4.8</span>
-    </div>
-  </div>
+    <Callout title="The Golden Rule of Model Serving" tone="green" className="mt-s">
+      Never deploy unquantized FP16 models in production unless required for scientific precision benchmarks.
+      4-bit and 8-bit quantization deliver a 2&times; to 4&times; throughput multiplier with negligible perceptual degradation.
+    </Callout>
+  </Page>
 );
