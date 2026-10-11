@@ -1,0 +1,8 @@
+# Binaries
+stage1/stage1-client
+*.exe
+*.out
+
+# Model weights
+models/*.gguf
+models/
