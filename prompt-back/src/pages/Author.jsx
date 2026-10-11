@@ -30,6 +30,7 @@ export default function Author({ author }) {
     ['Email', author.email],
     ['LinkedIn', author.linkedin],
     ['Medium', author.medium],
+    ['O11y blog', author.blog],
     ['Website', author.website],
     ['GitHub', author.github],
   ].filter(([, v]) => v)
@@ -94,19 +95,25 @@ export default function Author({ author }) {
         </div>
       </div>
 
-      <Section title="What&rsquo;s inside this guide" color="accent" className="mt-s">
-        <ol className="toc">
-          {toc.map(([page, tone, title, sub]) => (
-            <li key={title} className={`tone-${tone}`}>
-              <span className="toc-dot" />
-              <span className="toc-text">
-                <b>{title}</b>
-                <small>{sub}</small>
-              </span>
-              <span className="toc-page">{page}</span>
-            </li>
-          ))}
-        </ol>
+      <Section title="The Four Operational Pillars Covered" color="accent" className="mt-s">
+        <div className="grid4" style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '2mm' }}>
+          <div className="card tone-blue" style={{ padding: '2mm', fontSize: '7.5pt' }}>
+            <b style={{ color: '#1a73e8', display: 'block', marginBottom: '1mm' }}>1. Foundations</b>
+            <p style={{ margin: 0, fontSize: '7pt', lineHeight: 1.25 }}>The 8-layer stack, parameter math, and token economics.</p>
+          </div>
+          <div className="card tone-red" style={{ padding: '2mm', fontSize: '7.5pt' }}>
+            <b style={{ color: '#d93025', display: 'block', marginBottom: '1mm' }}>2. Mechanics</b>
+            <p style={{ margin: 0, fontSize: '7pt', lineHeight: 1.25 }}>Continuous batching, PagedAttention &amp; AVX2 SIMD.</p>
+          </div>
+          <div className="card tone-yellow" style={{ padding: '2mm', fontSize: '7.5pt' }}>
+            <b style={{ color: '#b06000', display: 'block', marginBottom: '1mm' }}>3. The 3 Labs</b>
+            <p style={{ margin: 0, fontSize: '7pt', lineHeight: 1.25 }}>Ollama Go client, LiteLLM gateway, and KServe on KinD.</p>
+          </div>
+          <div className="card tone-green" style={{ padding: '2mm', fontSize: '7.5pt' }}>
+            <b style={{ color: '#188038', display: 'block', marginBottom: '1mm' }}>4. SRE &amp; Signals</b>
+            <p style={{ margin: 0, fontSize: '7pt', lineHeight: 1.25 }}>TTFT, eBPF tracing, Prometheus metrics &amp; incident runbooks.</p>
+          </div>
+        </div>
       </Section>
 
       <Callout title="Engineering Perspective" tone="green" className="mt-s">

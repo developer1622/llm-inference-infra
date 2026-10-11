@@ -578,63 +578,45 @@ export const CircuitBreaking = () => (
 );
 
 export const WireCaptureProtocolNormalization = () => (
-  <div className="page flex flex-col justify-between p-10 bg-slate-900 text-slate-100 font-sans">
+  <div className="page flex flex-col justify-between px-8 py-5 bg-slate-900 text-slate-100 font-sans">
     <div>
-      <div className="flex justify-between items-center border-b border-slate-700 pb-2 mb-4">
+      <div className="flex justify-between items-center border-b border-slate-700 pb-2 mb-2">
         <span className="text-xs uppercase tracking-widest text-emerald-400 font-mono">Part VII · Stage 2 Deep Dive · Page 9</span>
-        <span className="text-xs text-slate-400 font-mono">Protocol Normalization & Wire Captures</span>
+        <span className="text-xs text-slate-400 font-mono">Protocol Normalization &amp; Wire Captures</span>
       </div>
-      <h2 className="text-2xl font-bold text-white mb-2">7.9 Wire Capture: How LiteLLM Normalizes Upstream Streams</h2>
-      <p className="text-xs text-slate-300 leading-relaxed mb-4">
+      <h2 className="text-xl font-bold text-white mb-1.5">7.9 Wire Capture: How LiteLLM Normalizes Upstream Streams</h2>
+      <p className="text-xs text-slate-300 leading-relaxed mb-3">
         Different model runtimes emit wildly different streaming schemas.
         We capture real HTTP wire traces comparing how LiteLLM ingests vendor-specific chunks and transforms them into standard OpenAI SSE chunks.
       </p>
 
       {/* Wire Comparison Box */}
-      <div className="grid grid-cols-2 gap-4 mb-4">
-        <div className="bg-slate-950 p-3 rounded border border-amber-500/40 font-mono text-[8px]">
-          <div className="text-amber-400 font-bold mb-1">// Upstream Ollama Wire Packet (Inbound to Gateway)</div>
-          <div className="text-slate-300 space-y-1">
-            <span className="text-slate-500">HTTP/1.1 200 OK</span><br/>
-            <span className="text-slate-500">Content-Type: application/x-ndjson</span><br/>
-            <span className="text-slate-500">Transfer-Encoding: chunked</span><br/><br/>
-            &#123;<br/>
-            &nbsp;&nbsp;"model": "qwen2.5:0.5b",<br/>
-            &nbsp;&nbsp;"created_at": "2026-10-11T12:00:00.123456Z",<br/>
-            &nbsp;&nbsp;"message": &#123;<br/>
-            &nbsp;&nbsp;&nbsp;&nbsp;"role": "assistant",<br/>
-            &nbsp;&nbsp;&nbsp;&nbsp;"content": " distributed"<br/>
-            &nbsp;&nbsp;&#125;,<br/>
-            &nbsp;&nbsp;"done": false<br/>
-            &#125;
+      <div className="grid grid-cols-2 gap-3 mb-3">
+        <div className="bg-slate-950 p-2 rounded border border-amber-500/40 font-mono text-[8px]">
+          <div className="text-amber-400 font-bold mb-0.5">// Upstream Ollama Packet (Inbound NDJSON)</div>
+          <div className="text-slate-300 space-y-0.5">
+            <span className="text-slate-500">HTTP/1.1 200 OK &bull; Content-Type: application/x-ndjson</span><br/>
+            <span className="text-slate-500">Transfer-Encoding: chunked</span><br/>
+            &#123;"model":"qwen2.5:0.5b", "created_at":"2026-10-11T12:00:00Z",<br/>
+            &nbsp;&nbsp;"message":&#123;"role":"assistant", "content":" distributed"&#125;, "done":false&#125;
           </div>
         </div>
 
-        <div className="bg-slate-950 p-3 rounded border border-emerald-500/40 font-mono text-[8px]">
-          <div className="text-emerald-400 font-bold mb-1">// Downstream LiteLLM Normalized Packet (Outbound to Client)</div>
-          <div className="text-slate-300 space-y-1">
-            <span className="text-emerald-400">HTTP/1.1 200 OK</span><br/>
-            <span className="text-emerald-400">Content-Type: text/event-stream; charset=utf-8</span><br/>
-            <span className="text-emerald-400">Cache-Control: no-cache</span><br/><br/>
-            data: &#123;<br/>
-            &nbsp;&nbsp;"id": "chatcmpl-9b88e1a7-5421-4d3f",<br/>
-            &nbsp;&nbsp;"object": "chat.completion.chunk",<br/>
-            &nbsp;&nbsp;"created": 1791720000,<br/>
-            &nbsp;&nbsp;"model": "qwen-local",<br/>
-            &nbsp;&nbsp;"choices": [&#123;<br/>
-            &nbsp;&nbsp;&nbsp;&nbsp;"index": 0,<br/>
-            &nbsp;&nbsp;&nbsp;&nbsp;"delta": &#123; "content": " distributed" &#125;,<br/>
-            &nbsp;&nbsp;&nbsp;&nbsp;"finish_reason": null<br/>
-            &nbsp;&nbsp;&#125;]<br/>
-            &#125;\n\n
+        <div className="bg-slate-950 p-2 rounded border border-emerald-500/40 font-mono text-[8px]">
+          <div className="text-emerald-400 font-bold mb-0.5">// Downstream LiteLLM Packet (Outbound SSE Stream)</div>
+          <div className="text-slate-300 space-y-0.5">
+            <span className="text-emerald-400">HTTP/1.1 200 OK &bull; Content-Type: text/event-stream</span><br/>
+            <span className="text-emerald-400">Cache-Control: no-cache</span><br/>
+            data: &#123;"id":"chatcmpl-9b88e1a7", "model":"qwen-local",<br/>
+            &nbsp;&nbsp;"choices":[&#123;"index":0, "delta":&#123;"content":" distributed"&#125;&#125;]&#125;\n\n
           </div>
         </div>
       </div>
 
-      <div className="grid grid-cols-2 gap-4 mb-4">
-        <div className="bg-slate-800/80 p-4 rounded border border-slate-700">
-          <h4 className="text-xs font-bold text-sky-300 uppercase tracking-wider mb-2 font-mono">Field Normalization Logic</h4>
-          <p className="text-[11px] text-slate-300 mb-2 leading-relaxed">
+      <div className="grid grid-cols-2 gap-3 mb-3">
+        <div className="bg-slate-800/80 p-3 rounded border border-slate-700">
+          <h4 className="text-xs font-bold text-sky-300 uppercase tracking-wider mb-1.5 font-mono">Field Normalization Logic</h4>
+          <p className="text-[11px] text-slate-300 mb-1.5 leading-relaxed">
             The gateway translates internal semantics:
           </p>
           <div className="text-[10px] text-slate-400 space-y-1">
@@ -644,9 +626,9 @@ export const WireCaptureProtocolNormalization = () => (
           </div>
         </div>
 
-        <div className="bg-slate-800/80 p-4 rounded border border-slate-700">
-          <h4 className="text-xs font-bold text-emerald-300 uppercase tracking-wider mb-2 font-mono">Stream Termination Handling</h4>
-          <p className="text-[11px] text-slate-300 mb-2 leading-relaxed">
+        <div className="bg-slate-800/80 p-3 rounded border border-slate-700">
+          <h4 className="text-xs font-bold text-emerald-300 uppercase tracking-wider mb-1.5 font-mono">Stream Termination Handling</h4>
+          <p className="text-[11px] text-slate-300 mb-1.5 leading-relaxed">
             Handling the final completion frame:
           </p>
           <div className="text-[10px] text-slate-400 space-y-1">

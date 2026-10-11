@@ -8,6 +8,7 @@ export const defaultAuthor = {
   email: '',
   linkedin: 'linkedin.com/in/ramu-mangalarapu',
   medium: 'medium.com/@ramu.mangalarapu1622',
+  blog: 'drishtiscope.com',
   website: 'vishvakosha.com',
   github: 'github.com/developer1622/llm-inference-infra',
   education: 'B.Tech in CSE · RGUKT IIIT Basar (2014–2018)',

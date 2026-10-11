@@ -28,44 +28,31 @@ spec:
     containers:
       - name: kserve-container
         image: kserve-predictor:v1
-        imagePullPolicy: IfNotPresent
         ports:
           - containerPort: 8080
         env:
           - name: OLLAMA_UPSTREAM
             value: "http://172.19.0.1:11434"
-          - name: OLLAMA_MODEL
-            value: "qwen2.5:0.5b"
         resources:
-          requests:
-            cpu: "100m"
-            memory: "64Mi"
-          limits:
-            cpu: "500m"
-            memory: "256Mi"
+          requests: { cpu: "100m", memory: "64Mi" }
+          limits:   { cpu: "500m", memory: "256Mi" }
         readinessProbe:
-          httpGet:
-            path: /v1/models
-            port: 8080
-          periodSeconds: 5
+          httpGet: { path: /v1/models, port: 8080 }
         livenessProbe:
-          httpGet:
-            path: /healthz
-            port: 8080
-          periodSeconds: 15`}
+          httpGet: { path: /healthz, port: 8080 }`}
           />
-          <div className="space-y-2 text-[8.5pt]">
-            <div className="card tone-green">
+          <div className="space-y-1.5 text-[8pt]">
+            <div className="card tone-green" style={{ padding: '2mm' }}>
               <b>RawDeployment Mode</b>
-              <p>Instructs the KServe operator to bypass Knative/Istio, generating standard Kubernetes Deployments, Services, and Ingress resources.</p>
+              <p style={{ margin: 0, fontSize: '7.4pt' }}>Instructs KServe to bypass Knative/Istio, generating standard Kubernetes Deployments, Services, and Ingress resources.</p>
             </div>
-            <div className="card tone-blue">
+            <div className="card tone-blue" style={{ padding: '2mm' }}>
               <b>Resource Quotas (cgroups v2)</b>
-              <p>Guarantees 100m CPU and 64Mi RAM during scheduling, while hard-capping at 500m CPU (CFS quota) and 256Mi RAM (OOM-killer wall).</p>
+              <p style={{ margin: 0, fontSize: '7.4pt' }}>Guarantees 100m CPU and 64Mi RAM, while hard-capping at 500m CPU (CFS quota) and 256Mi RAM (OOM-killer wall).</p>
             </div>
-            <div className="card tone-yellow">
+            <div className="card tone-yellow" style={{ padding: '2mm' }}>
               <b>Health Probes</b>
-              <p>Readiness probe on <code>/v1/models</code> gates ingress traffic; liveness probe on <code>/healthz</code> triggers kubelet self-healing restarts.</p>
+              <p style={{ margin: 0, fontSize: '7.4pt' }}>Readiness probe on <code>/v1/models</code> gates ingress traffic; liveness probe on <code>/healthz</code> triggers kubelet restarts.</p>
             </div>
           </div>
         </div>
@@ -74,42 +61,33 @@ spec:
       <div className="grid2 mt-s">
         <Section title="Applying & Verifying the InferenceService" color="green">
           <Term
-            title="bash · Cluster Status Verification"
-            code={`$ kubectl apply -f stage3/manifests/01-inferenceservice.yaml
+            title="bash · Cluster Verification"
+            code={`$ kubectl apply -f manifests/01-inferenceservice.yaml
 inferenceservice.serving.kserve.io/kserve-qwen created
 
-$ kubectl get isvc kserve-qwen -n kserve-test
-NAME          URL                                                  READY   PREV   LATEST
-kserve-qwen   http://kserve-qwen-kserve-test.127.0.0.1.nip.io     True           100
-
-$ kubectl get pods -n kserve-test -o wide
-NAME                                     READY   STATUS    NODE
-kserve-qwen-predictor-586445b4d5-vpm52  1/1     Running   ha-cluster-worker3`}
+$ kubectl get isvc,pods,ingress -n kserve-test -o wide
+isvc/kserve-qwen  URL: http://kserve-qwen-kserve-test.127.0.0.1.nip.io  READY: True
+pod/kserve-qwen-predictor-586445b4d5-vpm52 (1/1 Running on ha-cluster-worker3)
+ingress.networking.k8s.io/kserve-qwen (Host: kserve-qwen-kserve-test.127.0.0.1.nip.io)`}
           />
-          <p className="fine">
-            Notice that the KServe controller automatically provisioned a child deployment, service, and ingress.
-            The pod was scheduled on <code>ha-cluster-worker3</code> and reached 1/1 Running in 1.4 seconds.
+          <p className="fine" style={{ fontSize: '7.2pt' }}>
+            The controller provisioned a child deployment, service, and ingress. The pod scheduled on <code>ha-cluster-worker3</code> and reached 1/1 Running in 1.4s.
           </p>
         </Section>
 
-        <Section title="The KServe Child Resources" color="green">
+        <Section title="KServe Continuous Reconciliation" color="green">
           <Term
-            title="bash · kubectl get all -n kserve-test"
-            code={`pod/kserve-qwen-predictor-586445b4d5-vpm52 (1/1 Running)
+            title="bash · Child Deployment Specs"
+            code={`$ kubectl get deployment,svc -n kserve-test
+deployment.apps/kserve-qwen-predictor (1/1 ready)
+service/kserve-qwen-predictor (ClusterIP 10.96.220.14:80)
 
-service/kserve-qwen-predictor
-  Type: ClusterIP | IP: 10.96.220.14 | Port: 80/TCP
-
-deployment.apps/kserve-qwen-predictor
-  Replicas: 1 desired | 1 updated | 1 available
-
-ingress.networking.k8s.io/kserve-qwen
-  Hosts: kserve-qwen-kserve-test.127.0.0.1.nip.io
-  Address: 172.19.0.2 (ha-cluster-worker)`}
+# Self-Healing Guarantee:
+Any manual edit to the child deployment is automatically
+reconciled to conform to the InferenceService CR specification.`}
           />
-          <p className="fine">
-            All child resources are continuously reconciled by KServe. Any manual modification to the child deployment
-            is automatically reverted to conform to the master <code>InferenceService</code> CR specification.
+          <p className="fine" style={{ fontSize: '7.2pt' }}>
+            KServe acts as an active controller loop ensuring desired state matches reality across all worker nodes.
           </p>
         </Section>
       </div>

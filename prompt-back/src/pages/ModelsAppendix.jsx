@@ -4,7 +4,7 @@ import { modelYears } from '../data/models.js'
 
 // Rows that fit on one A4 sheet (verified by the overflow check in the layout tests).
 const FIRST_PAGE_ROWS = 36
-const OTHER_PAGE_ROWS = 46
+const OTHER_PAGE_ROWS = 42
 
 const licenseLabel = {
   open: 'Open licence',
@@ -75,7 +75,7 @@ export default function ModelsAppendix() {
     <>
       {pages.map((rows, pi) => (
         <Page key={pi} tone="multi" running={`Appendix · The model zoo (${pi + 1}/${pages.length})`} part="Appendix">
-          {pi === 0 && (
+          {pi === 0 ? (
             <div className="app-intro">
               <div className="kicker">Appendix · List of large language models</div>
               <h1 className="big">The model zoo, 2018 → October 2026</h1>
@@ -88,6 +88,14 @@ export default function ModelsAppendix() {
                   <span key={k}><i className={`s-${k}`} />{v}</span>
                 ))}
               </div>
+            </div>
+          ) : (
+            <div className="app-intro" style={{ marginBottom: '2.5mm' }}>
+              <div className="kicker">Appendix · List of large language models ({pi + 1} of {pages.length})</div>
+              <h1 className="big" style={{ fontSize: '15pt', margin: '0 0 1mm' }}>The Model Zoo (2018 &rarr; October 2026 &bull; Cont.)</h1>
+              <p className="fine left" style={{ margin: 0 }}>
+                Chronological index of milestone transformer architectures, open-weights releases, and foundation models.
+              </p>
             </div>
           )}
           <table className="mtable">
